@@ -7,23 +7,30 @@ const FIGHTER_EMOJI = {
   frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
 };
 
+const FIGHTER_COLORS = {
+  ruggero: '#ff4444', koen: '#44aaff', matthew: '#44ff88', martin: '#ff8844', robin: '#aa44ff',
+  frederik: '#ffdd44', vincent: '#ff44aa', devan: '#44ffdd', gereon: '#8888ff', noah: '#ff6666', alexander: '#ffd700',
+};
+
 export default function VictoryView() {
   const { matchWinner, players, selectedMap, nextMatch, resetGame, characters } = useGameStore();
   const [animStep, setAnimStep] = useState(0);
+  const [imgError, setImgError] = useState(false);
 
   const alive = players.filter((p) => !p.isEliminated);
   const isTournamentChampion = alive.length <= 1;
   const winnerCharName = characters.find((c) => c.id === matchWinner?.chosenCharacter)?.name || '???';
+  const winnerColor = FIGHTER_COLORS[matchWinner?.chosenCharacter] || '#facc15';
 
   useEffect(() => {
-    const t1 = setTimeout(() => setAnimStep(1), 2000);
-    const t2 = setTimeout(() => setAnimStep(2), 4500);
+    const t1 = setTimeout(() => setAnimStep(1), 3000);
+    const t2 = setTimeout(() => setAnimStep(2), 6500);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-      {/* Map background — blurred */}
+      {/* Blurred map background */}
       <div
         className="absolute inset-0 bg-cover bg-center scale-110"
         style={{
@@ -44,27 +51,36 @@ export default function VictoryView() {
 
       <div className="relative z-10 text-center px-6 w-full max-w-3xl">
         <AnimatePresence mode="wait">
-          {/* Step 0: GAME! / VICTORY! slam */}
+          {/* Step 0: VICTORY! slam */}
           {animStep === 0 && (
             <motion.div
               key="step0"
-              initial={{ scale: 4, opacity: 0 }}
-              animate={{ scale: [4, 1, 1.05], opacity: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{
-                scale: { times: [0, 0.15, 1], duration: 2 },
-                opacity: { duration: 0.15 },
-              }}
+              initial={{ scale: 5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.3 } }}
+              transition={{ type: 'tween', ease: 'easeOut', duration: 0.25 }}
             >
-              <h1
+              <motion.h1
                 className="text-8xl sm:text-9xl font-black text-white"
                 style={{
-                  WebkitTextStroke: '3px rgba(0,0,0,0.6)',
-                  textShadow: '0 0 60px rgba(250,204,21,0.5), 0 0 120px rgba(250,204,21,0.3), 0 8px 0 rgba(0,0,0,0.5)',
+                  filter: 'drop-shadow(0 8px 0 rgba(0,0,0,0.6)) drop-shadow(0 0 60px rgba(250,204,21,0.4))',
                 }}
+                animate={{ scale: [1, 1.03, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
               >
-                {isTournamentChampion ? 'VICTORY!' : 'GAME!'}
-              </h1>
+                VICTORY!
+              </motion.h1>
+              {/* Glow pulse behind text */}
+              <motion.div
+                className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none"
+                animate={{ opacity: [0.2, 0.5, 0.2] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <div
+                  className="w-[600px] h-[200px] rounded-full blur-3xl"
+                  style={{ background: `radial-gradient(ellipse, ${winnerColor}40 0%, transparent 70%)` }}
+                />
+              </motion.div>
             </motion.div>
           )}
 
@@ -72,24 +88,30 @@ export default function VictoryView() {
           {animStep === 1 && (
             <motion.div
               key="step1"
-              initial={{ x: '-100vw' }}
-              animate={{ x: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, transition: { duration: 0.3 } }}
+              transition={{ type: 'tween', ease: 'easeOut', duration: 0.6 }}
+              className="flex flex-col items-center"
             >
+              <div className="text-6xl mb-4">{FIGHTER_EMOJI[matchWinner?.chosenCharacter] || '⭐'}</div>
               <h2
-                className="text-4xl sm:text-6xl md:text-7xl font-black leading-tight"
+                className="text-5xl sm:text-6xl md:text-7xl font-black leading-tight"
                 style={{
-                  WebkitTextStroke: '2px rgba(0,0,0,0.5)',
-                  textShadow: '0 4px 0 rgba(0,0,0,0.4)',
+                  filter: 'drop-shadow(0 6px 0 rgba(0,0,0,0.5))',
                 }}
               >
-                <span className="text-yellow-400">{matchWinner?.name}</span>
-                <br />
-                <span className="text-white">
-                  {isTournamentChampion ? 'TOURNAMENT CHAMPION!' : 'WINS THE ROUND!'}
-                </span>
+                <span style={{ color: winnerColor }}>{matchWinner?.name}</span>
               </h2>
+              <motion.p
+                className="text-2xl sm:text-3xl font-black text-white mt-4 uppercase tracking-wide"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                style={{ filter: 'drop-shadow(0 3px 0 rgba(0,0,0,0.5))' }}
+              >
+                {isTournamentChampion ? '🏆 TOURNAMENT CHAMPION! 🏆' : 'WINS THIS ROUND!'}
+              </motion.p>
             </motion.div>
           )}
 
@@ -102,35 +124,48 @@ export default function VictoryView() {
               transition={{ duration: 0.5 }}
               className="flex flex-col items-center"
             >
-              {/* Character image */}
+              {/* Character image with fallback */}
               <motion.div
-                className="mb-6"
-                initial={{ scale: 0, rotate: -10 }}
-                animate={{ scale: 1, rotate: 0 }}
+                className="mb-6 relative"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
               >
-                <div className="relative">
+                {!imgError ? (
                   <img
                     src={`/assets/characters/${matchWinner?.chosenCharacter}.jpg`}
                     alt={winnerCharName}
-                    className="w-40 h-40 sm:w-56 sm:h-56 rounded-2xl object-cover border-4 border-yellow-400
-                      shadow-[0_0_40px_rgba(250,204,21,0.4)]"
+                    onError={() => setImgError(true)}
+                    className="w-44 h-44 sm:w-60 sm:h-60 rounded-2xl object-cover border-4 shadow-lg"
+                    style={{
+                      borderColor: winnerColor,
+                      boxShadow: `0 0 40px ${winnerColor}60`,
+                    }}
                   />
-                  <motion.div
-                    className="absolute -top-3 -right-3 text-4xl"
-                    animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
+                ) : (
+                  <div
+                    className="w-44 h-44 sm:w-60 sm:h-60 rounded-2xl border-4 flex items-center justify-center text-7xl"
+                    style={{
+                      borderColor: winnerColor,
+                      backgroundColor: `${winnerColor}15`,
+                      boxShadow: `0 0 40px ${winnerColor}60`,
+                    }}
                   >
-                    {isTournamentChampion ? '👑' : '🏆'}
-                  </motion.div>
-                </div>
+                    {FIGHTER_EMOJI[matchWinner?.chosenCharacter] || '⭐'}
+                  </div>
+                )}
+                <motion.div
+                  className="absolute -top-3 -right-3 text-4xl"
+                  animate={{ rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  {isTournamentChampion ? '👑' : '🏆'}
+                </motion.div>
               </motion.div>
 
-              {/* Winner emoji + name */}
-              <div className="text-6xl mb-2">{FIGHTER_EMOJI[matchWinner?.chosenCharacter] || '⭐'}</div>
               <h2
-                className="text-4xl sm:text-5xl font-black text-yellow-400 mb-1"
-                style={{ textShadow: '0 4px 0 rgba(0,0,0,0.4)' }}
+                className="text-4xl sm:text-5xl font-black mb-1"
+                style={{ color: winnerColor, filter: 'drop-shadow(0 4px 0 rgba(0,0,0,0.4))' }}
               >
                 {matchWinner?.name}
               </h2>
@@ -140,10 +175,10 @@ export default function VictoryView() {
 
               {isTournamentChampion && (
                 <motion.p
-                  className="text-2xl sm:text-3xl font-black text-white mb-8"
+                  className="text-2xl font-black text-yellow-400 mb-8"
                   animate={{ scale: [1, 1.03, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
-                  style={{ textShadow: '0 0 20px rgba(250,204,21,0.3)' }}
+                  style={{ filter: 'drop-shadow(0 0 15px rgba(250,204,21,0.3))' }}
                 >
                   🏆 TOURNAMENT CHAMPION 🏆
                 </motion.p>
@@ -154,7 +189,7 @@ export default function VictoryView() {
                 className="flex gap-4"
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.4 }}
               >
                 {!isTournamentChampion && (
                   <motion.button

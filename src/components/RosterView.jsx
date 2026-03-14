@@ -63,8 +63,16 @@ function FighterCard({ character, currentPlayerId, players }) {
         />
       )}
 
-      {/* Fighter emoji */}
-      <span className="text-4xl sm:text-5xl relative z-10">{FIGHTER_EMOJI[character.id]}</span>
+      {/* Fighter image with emoji fallback */}
+      <div className="relative z-10 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden flex items-center justify-center">
+        <img
+          src={`/assets/characters/${character.id}.jpg`}
+          alt={character.name}
+          className="w-full h-full object-cover"
+          onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
+        />
+        <span className="text-4xl sm:text-5xl hidden">{FIGHTER_EMOJI[character.id]}</span>
+      </div>
 
       {/* Name */}
       <span
