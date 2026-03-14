@@ -178,7 +178,7 @@ function PlayerTabs() {
 }
 
 export default function RosterView() {
-  const { players, currentTurn, characters, tournamentSize, confirmRoster } = useGameStore();
+  const { players, currentTurn, characters, tournamentSize, confirmRoster, goBack } = useGameStore();
 
   const currentPlayer = players.find((p) => p.id === currentTurn);
   const allLocked = players.every((p) => p.chosenCharacter !== null);
@@ -187,7 +187,16 @@ export default function RosterView() {
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
       {/* Header */}
-      <div className="pt-6 pb-2 px-4 text-center">
+      <div className="relative pt-6 pb-2 px-4 text-center">
+        <motion.button
+          onClick={goBack}
+          className="absolute top-6 left-4 flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-sm font-mono z-20"
+          whileHover={{ x: -3 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <span>←</span>
+          <span>Back to Title</span>
+        </motion.button>
         <motion.h1
           className="text-4xl sm:text-5xl font-black tracking-tight mb-1"
           initial={{ y: -30, opacity: 0 }}

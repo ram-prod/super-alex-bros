@@ -13,9 +13,13 @@
     { "id": "alexander", "name": "Alexander (Bachelor)" }
   ],
   "maps": [
-    { "id": "amsterdam", "name": "Amsterdam Arena" },
-    { "id": "dusseldorf", "name": "Düsseldorf Dome" },
-    { "id": "luxembourg", "name": "Luxembourg Fortress" }
+    { "id": "amsterdam", "name": "Amsterdam Hotelschool" },
+    { "id": "dusseldorf", "name": "Düsseldorf Altstadt" },
+    { "id": "berlijn", "name": "Berlin Berghain" },
+    { "id": "luxembourg", "name": "Luxembourg Fortress" },
+    { "id": "barcelona", "name": "Barcelona Beach" },
+    { "id": "lissabon", "name": "Lisbon Viewpoint" },
+    { "id": "valencia", "name": "Valencia Marina" }
   ],
   "content": [
     { "id": 1, "type": "trivia", "question": "What year was the original Smash Bros released?", "answer": "1999" },

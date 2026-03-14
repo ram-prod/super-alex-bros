@@ -17,7 +17,7 @@ const pickNextTwo = (players) => {
 
 const useGameStore = create((set, get) => ({
   // --- state ---
-  gamePhase: 'roster_select',
+  gamePhase: 'splash',
   tournamentSize: 11,
   players: createPlayers(11),
   currentTurn: 1, // which player is currently selecting
@@ -144,9 +144,16 @@ const useGameStore = create((set, get) => ({
       };
     }),
 
+  goBack: () =>
+    set((state) => {
+      if (state.gamePhase === 'map_select') return { gamePhase: 'roster_select' };
+      if (state.gamePhase === 'roster_select') return { gamePhase: 'splash' };
+      return {};
+    }),
+
   resetGame: () =>
     set((state) => ({
-      gamePhase: 'roster_select',
+      gamePhase: 'splash',
       players: createPlayers(state.tournamentSize),
       currentTurn: 1,
       currentMatch: { player1: null, player2: null, p1Damage: 0, p2Damage: 0, activeQuestion: null },

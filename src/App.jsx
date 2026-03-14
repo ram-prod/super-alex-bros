@@ -1,16 +1,17 @@
 import useGameStore from './store/useGameStore';
+import SplashView from './components/SplashView';
 import RosterView from './components/RosterView';
+import MapSelectView from './components/MapSelectView';
 
 function App() {
   const {
     gamePhase, players, currentMatch, selectedMap, maps, matchWinner,
-    selectMap, startBattle, awardDamage, nextMatch, resetGame,
+    startBattle, awardDamage, nextMatch, resetGame,
   } = useGameStore();
 
-  // Roster select phase → full RosterView component
-  if (gamePhase === 'roster_select') {
-    return <RosterView />;
-  }
+  if (gamePhase === 'splash') return <SplashView />;
+  if (gamePhase === 'roster_select') return <RosterView />;
+  if (gamePhase === 'map_select') return <MapSelectView />;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6 font-mono">
@@ -19,21 +20,6 @@ function App() {
         Phase: <span className="text-cyan-400 font-bold">{gamePhase}</span>
         {selectedMap && <> | Map: <span className="text-green-400">{selectedMap}</span></>}
       </p>
-
-      {/* Map Select */}
-      {gamePhase === 'map_select' && (
-        <div className="mb-6">
-          <h2 className="text-xl mb-2 text-yellow-300">Select Map</h2>
-          <div className="flex gap-3">
-            {maps.map((m) => (
-              <button key={m.id} onClick={() => selectMap(m.id)}
-                className="bg-purple-700 hover:bg-purple-600 px-4 py-2 rounded font-bold">
-                {m.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* VS Screen */}
       {gamePhase === 'vs_screen' && currentMatch.player1 && (
