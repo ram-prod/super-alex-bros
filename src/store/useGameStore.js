@@ -10,7 +10,7 @@ const createPlayers = (count) =>
     isEliminated: false,
     wins: 0,
     losses: 0,
-    pool: null, // 'A', 'B', or 'C'
+    pool: null,
   }));
 
 const shuffle = (arr) => {
@@ -22,31 +22,47 @@ const shuffle = (arr) => {
   return a;
 };
 
-// Generate round-robin pairs for an array of player IDs
-const roundRobin = (playerIds) => {
+// Round-robin pairs for an array of player IDs
+const roundRobin = (ids) => {
   const matches = [];
-  for (let i = 0; i < playerIds.length; i++) {
-    for (let j = i + 1; j < playerIds.length; j++) {
-      matches.push({ p1Id: playerIds[i], p2Id: playerIds[j], completed: false, winnerId: null });
+  for (let i = 0; i < ids.length; i++) {
+    for (let j = i + 1; j < ids.length; j++) {
+      matches.push({ p1Id: ids[i], p2Id: ids[j] });
     }
   }
-  return shuffle(matches); // randomize match order within pool
+  return shuffle(matches);
+};
+
+// Distribute N ids into K pools as evenly as possible
+const splitIntoPools = (ids, poolCount) => {
+  const labels = ['A', 'B', 'C'];
+  const pools = {};
+  for (let k = 0; k < poolCount; k++) pools[labels[k]] = [];
+  ids.forEach((id, i) => pools[labels[i % poolCount]].push(id));
+  return pools;
+};
+
+// Get sorted standings for a pool
+const getPoolStandings = (poolIds, players) => {
+  return poolIds
+    .map((id) => players.find((p) => p.id === id))
+    .sort((a, b) => b.wins - a.wins || a.losses - b.losses);
 };
 
 const useGameStore = create((set, get) => ({
   // --- state ---
   gamePhase: 'splash',
-  // 'splash' | 'roster_select' | 'tournament_overview' | 'map_select' | 'vs_screen' | 'battle' | 'victory'
   tournamentSize: 11,
   players: createPlayers(11),
   currentTurn: 1,
 
   // Tournament structure
-  pools: { A: [], B: [], C: [] }, // arrays of player IDs
-  groupMatches: [],    // all group stage matches
-  knockoutMatches: [],  // knockout bracket matches
-  tournamentPhase: 'group', // 'group' | 'knockout' | 'final' | 'finished'
-  currentMatchIndex: -1, // index into groupMatches or knockoutMatches
+  pools: {},              // { A: [ids], B: [ids], C: [ids] }
+  poolCount: 0,
+  tournamentPhase: 'groups', // 'groups' | 'knockout'
+  pendingMatches: [],     // matches yet to be played
+  completedMatches: [],   // finished matches
+  knockoutRounds: [],     // for bracket display: [{ round, matches: [...] }]
 
   // Current battle
   currentMatch: { player1: null, player2: null, p1Damage: 0, p2Damage: 0, activeQuestion: null },
@@ -64,114 +80,165 @@ const useGameStore = create((set, get) => ({
   // --- actions ---
   setTournamentSize: (size) => {
     const clamped = Math.max(2, Math.min(11, size));
-    set({
-      tournamentSize: clamped,
-      players: createPlayers(clamped),
-      currentTurn: 1,
-    });
+    set({ tournamentSize: clamped, players: createPlayers(clamped), currentTurn: 1 });
   },
 
   assignCharacter: (playerId, characterId) =>
     set((state) => {
       const player = state.players.find((p) => p.id === playerId);
       if (!player) return {};
-
       if (player.chosenCharacter === characterId) {
         return { players: state.players.map((p) => p.id === playerId ? { ...p, chosenCharacter: null } : p) };
       }
-
-      const takenBy = state.players.find((p) => p.id !== playerId && p.chosenCharacter === characterId);
-      if (takenBy) return {};
-
+      if (state.players.find((p) => p.id !== playerId && p.chosenCharacter === characterId)) return {};
       const players = state.players.map((p) => p.id === playerId ? { ...p, chosenCharacter: characterId } : p);
       const nextUnchosen = players.find((p) => p.id > playerId && !p.chosenCharacter);
       const firstUnchosen = players.find((p) => !p.chosenCharacter);
-      const nextTurn = nextUnchosen?.id || firstUnchosen?.id || state.currentTurn;
-
-      return { players, currentTurn: nextTurn };
+      return { players, currentTurn: nextUnchosen?.id || firstUnchosen?.id || state.currentTurn };
     }),
 
   confirmRoster: () =>
     set((state) => {
-      const allLocked = state.players.every((p) => p.chosenCharacter !== null);
-      if (!allLocked) return {};
+      if (!state.players.every((p) => p.chosenCharacter !== null)) return {};
       return { gamePhase: 'tournament_overview' };
     }),
 
-  // Generate full tournament structure
+  // ============================================
+  // DYNAMIC TOURNAMENT GENERATION
+  // ============================================
   generateTournament: () =>
     set((state) => {
+      const size = state.tournamentSize;
       const ids = shuffle(state.players.map((p) => p.id));
-      const size = ids.length;
 
-      // Split into 3 pools: A gets ceil(n/3), B gets ceil((n-A)/2), C gets rest
-      const poolASize = Math.ceil(size / 3);
-      const poolBSize = Math.ceil((size - poolASize) / 2);
-      const poolA = ids.slice(0, poolASize);
-      const poolB = ids.slice(poolASize, poolASize + poolBSize);
-      const poolC = ids.slice(poolASize + poolBSize);
+      // --- Size 2: Direct final, no groups ---
+      if (size === 2) {
+        const players = state.players.map((p) => ({ ...p, pool: null }));
+        return {
+          players,
+          pools: {},
+          poolCount: 0,
+          tournamentPhase: 'knockout',
+          pendingMatches: [{ p1Id: ids[0], p2Id: ids[1], pool: null, round: 'Final', label: 'GRAND FINAL' }],
+          completedMatches: [],
+          knockoutRounds: [{ round: 'Final', matches: [{ p1Id: ids[0], p2Id: ids[1], completed: false, winnerId: null }] }],
+          isTournamentOver: false,
+          tournamentWinner: null,
+        };
+      }
+
+      // --- Determine pool count ---
+      let poolCount;
+      if (size <= 5) poolCount = 1;
+      else if (size <= 8) poolCount = 2;
+      else poolCount = 3;
+
+      const pools = splitIntoPools(ids, poolCount);
 
       // Tag players with pool
       const players = state.players.map((p) => {
-        if (poolA.includes(p.id)) return { ...p, pool: 'A' };
-        if (poolB.includes(p.id)) return { ...p, pool: 'B' };
-        return { ...p, pool: 'C' };
+        for (const [label, pIds] of Object.entries(pools)) {
+          if (pIds.includes(p.id)) return { ...p, pool: label, wins: 0, losses: 0, isEliminated: false };
+        }
+        return { ...p, wins: 0, losses: 0, isEliminated: false };
       });
 
-      // Generate round-robin matches per pool, tagged with pool label
-      const matchesA = roundRobin(poolA).map((m) => ({ ...m, pool: 'A' }));
-      const matchesB = roundRobin(poolB).map((m) => ({ ...m, pool: 'B' }));
-      const matchesC = roundRobin(poolC).map((m) => ({ ...m, pool: 'C' }));
+      // Generate round-robin matches per pool, interleaved
+      const poolLabels = Object.keys(pools);
+      const poolMatches = {};
+      poolLabels.forEach((label) => {
+        poolMatches[label] = roundRobin(pools[label]).map((m) => ({ ...m, pool: label, round: 'Group', label: `Pool ${label}` }));
+      });
 
-      // Interleave: A, B, C, A, B, C... so pools alternate
-      const groupMatches = [];
-      const maxLen = Math.max(matchesA.length, matchesB.length, matchesC.length);
+      // Interleave matches across pools
+      const pending = [];
+      const maxLen = Math.max(...poolLabels.map((l) => poolMatches[l].length));
       for (let i = 0; i < maxLen; i++) {
-        if (i < matchesA.length) groupMatches.push(matchesA[i]);
-        if (i < matchesB.length) groupMatches.push(matchesB[i]);
-        if (i < matchesC.length) groupMatches.push(matchesC[i]);
+        poolLabels.forEach((l) => {
+          if (i < poolMatches[l].length) pending.push(poolMatches[l][i]);
+        });
       }
 
       return {
         players,
-        pools: { A: poolA, B: poolB, C: poolC },
-        groupMatches,
-        knockoutMatches: [],
-        tournamentPhase: 'group',
-        currentMatchIndex: -1,
+        pools,
+        poolCount,
+        tournamentPhase: 'groups',
+        pendingMatches: pending,
+        completedMatches: [],
+        knockoutRounds: [],
         isTournamentOver: false,
         tournamentWinner: null,
       };
     }),
 
-  // Generate knockout bracket from top 2 per pool
-  generateKnockout: () =>
+  // ============================================
+  // KNOCKOUT BRACKET GENERATION
+  // ============================================
+  generateKnockoutBracket: () =>
     set((state) => {
-      const { players, pools } = state;
+      const { pools, poolCount, players } = state;
 
-      // Get top 2 from each pool by wins, then losses as tiebreaker
-      const getTop2 = (poolIds) => {
-        const poolPlayers = poolIds.map((id) => players.find((p) => p.id === id));
-        poolPlayers.sort((a, b) => b.wins - a.wins || a.losses - b.losses);
-        return poolPlayers.slice(0, 2);
-      };
+      if (poolCount === 0) return {}; // size 2, already in knockout
 
-      const topA = getTop2(pools.A);
-      const topB = getTop2(pools.B);
-      const topC = getTop2(pools.C);
+      const poolLabels = Object.keys(pools);
+      let qualifierIds = [];
+      let knockoutMatches = [];
 
-      const qualifiers = [...topA, ...topB, ...topC]; // 6 players
+      if (poolCount === 1) {
+        // Top 2 from Pool A → Grand Final
+        const standings = getPoolStandings(pools.A, players);
+        qualifierIds = standings.slice(0, 2).map((p) => p.id);
+        knockoutMatches = [
+          { p1Id: qualifierIds[0], p2Id: qualifierIds[1], round: 'Final', label: 'GRAND FINAL', completed: false, winnerId: null },
+        ];
+      } else if (poolCount === 2) {
+        // Top 2 from each pool → Semi-Finals: A1 vs B2, B1 vs A2
+        const standA = getPoolStandings(pools.A, players);
+        const standB = getPoolStandings(pools.B, players);
+        const a1 = standA[0], a2 = standA[1], b1 = standB[0], b2 = standB[1];
+        qualifierIds = [a1, a2, b1, b2].map((p) => p.id);
+        knockoutMatches = [
+          { p1Id: a1.id, p2Id: b2.id, round: 'SF', label: 'Semi Final 1', completed: false, winnerId: null },
+          { p1Id: b1.id, p2Id: a2.id, round: 'SF', label: 'Semi Final 2', completed: false, winnerId: null },
+        ];
+      } else {
+        // 3 pools: 3 pool winners + best runner-up → Semi-Finals
+        const standings = poolLabels.map((l) => getPoolStandings(pools[l], players));
+        const winners = standings.map((s) => s[0]); // 3 pool winners
+        const runnersUp = standings
+          .map((s) => s[1])
+          .filter(Boolean)
+          .sort((a, b) => b.wins - a.wins || a.losses - b.losses);
+        const bestRunnerUp = runnersUp[0];
 
-      // Knockout bracket: QF (3 matches) → SF (will be generated after) → Final
-      // Seed: 1A vs 2C, 1B vs 2A, 1C vs 2B
-      const knockoutMatches = [
-        { p1Id: topA[0].id, p2Id: topC[1]?.id || topC[0]?.id, completed: false, winnerId: null, round: 'QF', label: 'QF 1' },
-        { p1Id: topB[0].id, p2Id: topA[1].id, completed: false, winnerId: null, round: 'QF', label: 'QF 2' },
-        { p1Id: topC[0].id, p2Id: topB[1].id, completed: false, winnerId: null, round: 'QF', label: 'QF 3' },
-      ];
+        const semiFighters = [...winners];
+        if (bestRunnerUp) semiFighters.push(bestRunnerUp);
+
+        qualifierIds = semiFighters.map((p) => p.id);
+
+        if (semiFighters.length === 4) {
+          // Seed: Pool A winner vs best runner-up, Pool B winner vs Pool C winner
+          knockoutMatches = [
+            { p1Id: semiFighters[0].id, p2Id: semiFighters[3].id, round: 'SF', label: 'Semi Final 1', completed: false, winnerId: null },
+            { p1Id: semiFighters[1].id, p2Id: semiFighters[2].id, round: 'SF', label: 'Semi Final 2', completed: false, winnerId: null },
+          ];
+        } else if (semiFighters.length === 3) {
+          // 3 fighters: #1 seed gets bye, #2 vs #3
+          knockoutMatches = [
+            { p1Id: semiFighters[1].id, p2Id: semiFighters[2].id, round: 'SF', label: 'Semi Final', completed: false, winnerId: null },
+          ];
+          // Store bye player
+          set({ _byePlayerId: semiFighters[0].id });
+        } else {
+          // 2 fighters: direct final
+          knockoutMatches = [
+            { p1Id: semiFighters[0].id, p2Id: semiFighters[1].id, round: 'Final', label: 'GRAND FINAL', completed: false, winnerId: null },
+          ];
+        }
+      }
 
       // Mark non-qualifiers as eliminated
-      const qualifierIds = qualifiers.map((q) => q.id);
       const updatedPlayers = players.map((p) => ({
         ...p,
         isEliminated: !qualifierIds.includes(p.id),
@@ -179,70 +246,73 @@ const useGameStore = create((set, get) => ({
 
       return {
         players: updatedPlayers,
-        knockoutMatches,
         tournamentPhase: 'knockout',
-        currentMatchIndex: -1,
+        pendingMatches: knockoutMatches,
+        knockoutRounds: [{ round: knockoutMatches[0]?.round || 'Final', matches: knockoutMatches.map((m) => ({ ...m })) }],
+        gamePhase: 'tournament_overview',
       };
     }),
 
-  // Advance knockout: generate next round from winners
+  // ============================================
+  // ADVANCE KNOCKOUT (generate next round)
+  // ============================================
   advanceKnockout: () =>
     set((state) => {
-      const { knockoutMatches } = state;
-      const currentRound = knockoutMatches.filter((m) => !m.completed);
-      if (currentRound.length > 0) return {}; // not all done
+      const { completedMatches, knockoutRounds, _byePlayerId, players } = state;
 
-      const completedRounds = knockoutMatches.filter((m) => m.completed);
-      const lastRound = completedRounds[completedRounds.length - 1]?.round;
+      // Find winners from the latest round
+      const lastRound = knockoutRounds[knockoutRounds.length - 1];
+      if (!lastRound) return {};
 
-      if (lastRound === 'Final') {
-        // Tournament is over
-        const finalMatch = knockoutMatches.find((m) => m.round === 'Final' && m.completed);
-        const winner = state.players.find((p) => p.id === finalMatch?.winnerId);
-        return { tournamentPhase: 'finished', isTournamentOver: true, tournamentWinner: winner };
+      const roundWinnerIds = lastRound.matches
+        .filter((m) => m.completed)
+        .map((m) => m.winnerId);
+
+      if (lastRound.round === 'Final') {
+        // Tournament over
+        const winner = players.find((p) => p.id === roundWinnerIds[0]);
+        return { isTournamentOver: true, tournamentWinner: winner };
       }
 
-      // Collect winners from last round
-      const roundMatches = knockoutMatches.filter((m) => m.round === lastRound && m.completed);
-      const winnerIds = roundMatches.map((m) => m.winnerId);
+      // Generate next round
+      let nextMatches = [];
+      let nextRound = 'Final';
 
-      let newMatches = [];
-      if (lastRound === 'QF') {
-        // 3 QF winners → SF: #1 vs #2, #3 gets bye to final
-        if (winnerIds.length === 3) {
-          newMatches = [
-            { p1Id: winnerIds[0], p2Id: winnerIds[1], completed: false, winnerId: null, round: 'SF', label: 'Semi Final' },
+      if (lastRound.round === 'SF') {
+        if (roundWinnerIds.length === 2) {
+          nextMatches = [
+            { p1Id: roundWinnerIds[0], p2Id: roundWinnerIds[1], round: 'Final', label: 'GRAND FINAL', completed: false, winnerId: null },
           ];
-          // Store bye player for final
-          set((s) => ({ _byePlayerId: winnerIds[2] }));
+        } else if (roundWinnerIds.length === 1 && _byePlayerId) {
+          nextMatches = [
+            { p1Id: roundWinnerIds[0], p2Id: _byePlayerId, round: 'Final', label: 'GRAND FINAL', completed: false, winnerId: null },
+          ];
         }
-      } else if (lastRound === 'SF') {
-        const byeId = state._byePlayerId;
-        const sfWinner = winnerIds[0];
-        newMatches = [
-          { p1Id: sfWinner, p2Id: byeId, completed: false, winnerId: null, round: 'Final', label: 'GRAND FINAL' },
-        ];
       }
 
       // Eliminate losers
-      const allWinnerIds = knockoutMatches.filter((m) => m.completed).map((m) => m.winnerId);
-      const byeId = state._byePlayerId;
-      const stillInIds = [...new Set([...winnerIds, ...(byeId ? [byeId] : [])])];
+      const loserIds = lastRound.matches
+        .filter((m) => m.completed)
+        .map((m) => m.winnerId === m.p1Id ? m.p2Id : m.p1Id);
+      const updatedPlayers = players.map((p) => loserIds.includes(p.id) ? { ...p, isEliminated: true } : p);
 
       return {
-        knockoutMatches: [...knockoutMatches, ...newMatches],
-        currentMatchIndex: -1,
+        players: updatedPlayers,
+        pendingMatches: nextMatches,
+        knockoutRounds: [...knockoutRounds, { round: nextRound, matches: nextMatches.map((m) => ({ ...m })) }],
+        gamePhase: 'tournament_overview',
       };
     }),
 
+  // ============================================
+  // MAP SELECT → loads next pending match
+  // ============================================
   selectMap: (mapId) =>
     set((state) => {
-      const { tournamentPhase, groupMatches, knockoutMatches, players } = state;
-      const matches = tournamentPhase === 'group' ? groupMatches : knockoutMatches;
-      const nextMatch = matches.find((m) => !m.completed);
+      const { pendingMatches, players } = state;
+      if (pendingMatches.length === 0) return {};
 
-      if (!nextMatch) return {};
-
+      const nextMatch = pendingMatches[0];
       const player1 = players.find((p) => p.id === nextMatch.p1Id);
       const player2 = players.find((p) => p.id === nextMatch.p2Id);
 
@@ -256,6 +326,9 @@ const useGameStore = create((set, get) => ({
 
   startBattle: () => set({ gamePhase: 'battle' }),
 
+  // ============================================
+  // AWARD DAMAGE + auto KO
+  // ============================================
   awardDamage: (loserPlayerId) =>
     set((state) => {
       const m = state.currentMatch;
@@ -270,53 +343,54 @@ const useGameStore = create((set, get) => ({
       if (newP1Damage >= 200) { winner = m.player2; loserId = m.player1.id; }
       else if (newP2Damage >= 200) { winner = m.player1; loserId = m.player2.id; }
 
-      if (winner) {
-        const { tournamentPhase, groupMatches, knockoutMatches } = state;
-        const matches = tournamentPhase === 'group' ? groupMatches : knockoutMatches;
-        const matchKey = tournamentPhase === 'group' ? 'groupMatches' : 'knockoutMatches';
+      if (!winner) return { currentMatch: newMatch };
 
-        // Mark match completed
-        const updatedMatches = matches.map((mt) => {
-          if (!mt.completed && mt.p1Id === m.player1.id && mt.p2Id === m.player2.id) {
-            return { ...mt, completed: true, winnerId: winner.id };
-          }
-          return mt;
-        });
-
-        // Update player stats
-        const players = state.players.map((p) => {
-          if (p.id === winner.id) return { ...p, wins: p.wins + 1 };
-          if (p.id === loserId) {
-            const update = { ...p, losses: p.losses + 1 };
-            // In knockout, loser is eliminated
-            if (tournamentPhase !== 'group') update.isEliminated = true;
-            return update;
-          }
-          return p;
-        });
-
-        return {
-          currentMatch: newMatch,
-          players,
-          matchWinner: winner,
-          gamePhase: 'victory',
-          [matchKey]: updatedMatches,
-        };
+      // Remove match from pending, add to completed
+      const pending = [...state.pendingMatches];
+      const completed = [...state.completedMatches];
+      const matchData = pending.shift();
+      if (matchData) {
+        completed.push({ ...matchData, completed: true, winnerId: winner.id });
       }
 
-      return { currentMatch: newMatch };
-    }),
+      // Update knockout round tracking
+      const knockoutRounds = state.knockoutRounds.map((round) => ({
+        ...round,
+        matches: round.matches.map((rm) =>
+          rm.p1Id === m.player1.id && rm.p2Id === m.player2.id && !rm.completed
+            ? { ...rm, completed: true, winnerId: winner.id }
+            : rm
+        ),
+      }));
 
-  // After victory sequence, go back to tournament overview
-  nextMatch: () =>
-    set((state) => {
+      // Update player stats
+      const players = state.players.map((p) => {
+        if (p.id === winner.id) return { ...p, wins: p.wins + 1 };
+        if (p.id === loserId) return { ...p, losses: p.losses + 1 };
+        return p;
+      });
+
       return {
-        gamePhase: 'tournament_overview',
-        selectedMap: null,
-        matchWinner: null,
-        currentMatch: { player1: null, player2: null, p1Damage: 0, p2Damage: 0, activeQuestion: null },
+        currentMatch: newMatch,
+        players,
+        matchWinner: winner,
+        gamePhase: 'victory',
+        pendingMatches: pending,
+        completedMatches: completed,
+        knockoutRounds,
       };
     }),
+
+  // ============================================
+  // NEXT MATCH → back to tournament overview
+  // ============================================
+  nextMatch: () =>
+    set(() => ({
+      gamePhase: 'tournament_overview',
+      selectedMap: null,
+      matchWinner: null,
+      currentMatch: { player1: null, player2: null, p1Damage: 0, p2Damage: 0, activeQuestion: null },
+    })),
 
   goBack: () =>
     set((state) => {
@@ -331,11 +405,12 @@ const useGameStore = create((set, get) => ({
       gamePhase: 'splash',
       players: createPlayers(state.tournamentSize),
       currentTurn: 1,
-      pools: { A: [], B: [], C: [] },
-      groupMatches: [],
-      knockoutMatches: [],
-      tournamentPhase: 'group',
-      currentMatchIndex: -1,
+      pools: {},
+      poolCount: 0,
+      tournamentPhase: 'groups',
+      pendingMatches: [],
+      completedMatches: [],
+      knockoutRounds: [],
       currentMatch: { player1: null, player2: null, p1Damage: 0, p2Damage: 0, activeQuestion: null },
       selectedMap: null,
       matchWinner: null,
