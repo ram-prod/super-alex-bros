@@ -1,16 +1,16 @@
 {
   "characters": [
-    { "id": "mario", "name": "Mario" },
-    { "id": "dk", "name": "Donkey Kong" },
-    { "id": "samus", "name": "Samus" },
-    { "id": "link", "name": "Link" },
-    { "id": "pikachu", "name": "Pikachu" },
-    { "id": "kirby", "name": "Kirby" },
-    { "id": "fox", "name": "Fox" },
-    { "id": "yoshi", "name": "Yoshi" },
-    { "id": "luigi", "name": "Luigi" },
-    { "id": "falcon", "name": "Captain Falcon" },
-    { "id": "ness", "name": "Ness" }
+    { "id": "ruggero", "name": "Ruggero" },
+    { "id": "koen", "name": "Koen" },
+    { "id": "matthew", "name": "Matthew" },
+    { "id": "martin", "name": "Martin" },
+    { "id": "robin", "name": "Robin" },
+    { "id": "frederik", "name": "Frederik" },
+    { "id": "vincent", "name": "Vincent" },
+    { "id": "devan", "name": "Devan" },
+    { "id": "gereon", "name": "Gereon" },
+    { "id": "noah", "name": "Noah" },
+    { "id": "alexander", "name": "Alexander (Bachelor)" }
   ],
   "maps": [
     { "id": "amsterdam", "name": "Amsterdam Arena" },
