@@ -97,7 +97,7 @@ export default function MapSelectView() {
 
       {/* Map Grid */}
       <div className="flex-1 px-4 sm:px-6 py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
           {maps.map((map, i) => (
             <MapCard key={map.id} map={map} index={i} />
           ))}
