@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import useGameStore from './store/useGameStore';
 import SplashView from './components/SplashView';
 import RosterView from './components/RosterView';
+import TournamentBracketView from './components/TournamentBracketView';
 import MapSelectView from './components/MapSelectView';
 import VsScreenView from './components/VsScreenView';
 import BattleView from './components/BattleView';
@@ -10,6 +11,7 @@ import VictoryView from './components/VictoryView';
 const views = {
   splash: SplashView,
   roster_select: RosterView,
+  tournament_overview: TournamentBracketView,
   map_select: MapSelectView,
   vs_screen: VsScreenView,
   battle: BattleView,

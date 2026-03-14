@@ -203,12 +203,7 @@ export default function VictoryView() {
                   <motion.button onClick={nextMatch}
                     className="px-8 py-4 rounded-xl text-lg font-black uppercase tracking-wide bg-gradient-to-r from-blue-600 to-blue-500 text-white border-2 border-blue-400/50 hover:border-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] transition-all"
                     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    Next Match →
-                  </motion.button>
-                  <motion.button onClick={resetGame}
-                    className="px-8 py-4 rounded-xl text-lg font-black uppercase tracking-wide bg-gray-800 text-gray-300 border-2 border-gray-600/50 hover:border-gray-400 hover:text-white transition-all"
-                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    Reset
+                    Tournament Overview →
                   </motion.button>
                 </motion.div>
               )}

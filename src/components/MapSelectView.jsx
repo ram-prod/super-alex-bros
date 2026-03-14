@@ -62,7 +62,7 @@ export default function MapSelectView() {
       {/* Slam-in title */}
       <div className="relative pt-6 pb-2 px-6">
         <div className="absolute top-6 left-6 z-20">
-          <BackButton onClick={goBack} label="Roster" />
+          <BackButton onClick={goBack} label="Tournament" />
         </div>
 
         <div className="text-center overflow-hidden pt-2">
