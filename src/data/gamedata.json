@@ -20,7 +20,8 @@
     { "id": "barcelona", "name": "Barcelona Beach" },
     { "id": "lissabon", "name": "Lisbon Viewpoint" },
     { "id": "valencia", "name": "Valencia Marina" },
-    { "id": "nyc", "name": "New York Michelin Kitchen" }
+    { "id": "nyc", "name": "New York Michelin Kitchen" },
+    { "id": "villa", "name": "The Bachelor Villa", "isSecret": true }
   ],
   "content": [
     { "id": 1, "type": "trivia", "question": "What year was the original Smash Bros released?", "answer": "1999" },

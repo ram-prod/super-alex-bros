@@ -157,7 +157,21 @@ export default function TournamentBracketView() {
   const nextP1 = nextMatch ? players.find((p) => p.id === nextMatch.p1Id) : null;
   const nextP2 = nextMatch ? players.find((p) => p.id === nextMatch.p2Id) : null;
 
-  const goToMapSelect = () => useGameStore.setState({ gamePhase: 'map_select' });
+  const goToMapSelect = () => {
+    if (nextMatch?.isFinal) {
+      // Grand Final bypasses map select — always at The Bachelor Villa
+      const p1 = players.find((p) => p.id === nextMatch.p1Id);
+      const p2 = players.find((p) => p.id === nextMatch.p2Id);
+      useGameStore.setState({
+        selectedMap: 'villa',
+        gamePhase: 'vs_screen',
+        currentMatch: { player1: p1, player2: p2, p1Damage: 0, p2Damage: 0, activeQuestion: null, isFinal: true },
+        matchWinner: null,
+      });
+    } else {
+      useGameStore.setState({ gamePhase: 'map_select' });
+    }
+  };
 
   const poolLabels = Object.keys(pools);
 

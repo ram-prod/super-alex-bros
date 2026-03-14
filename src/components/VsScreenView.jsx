@@ -9,6 +9,7 @@ const FIGHTER_EMOJI = {
 export default function VsScreenView() {
   const { currentMatch, startBattle, characters } = useGameStore();
   const { player1, player2 } = currentMatch;
+  const isFinal = currentMatch.isFinal;
 
   const getCharName = (p) => characters.find((c) => c.id === p?.chosenCharacter)?.name || '???';
 
@@ -39,6 +40,45 @@ export default function VsScreenView() {
 
       {/* Content */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6">
+        {/* GRAND FINAL banner */}
+        {isFinal && (
+          <motion.div
+            className="mb-6"
+            initial={{ y: -60, opacity: 0, scale: 1.5 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
+          >
+            <motion.h2
+              className="text-4xl sm:text-5xl md:text-6xl font-black italic text-center uppercase tracking-wide"
+              style={{
+                background: 'linear-gradient(180deg, #ffd700, #f59e0b, #d97706)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+                filter: 'drop-shadow(0 4px 0 rgba(0,0,0,0.5))',
+              }}
+              animate={{
+                filter: [
+                  'drop-shadow(0 4px 0 rgba(0,0,0,0.5)) drop-shadow(0 0 20px rgba(255,215,0,0.3))',
+                  'drop-shadow(0 4px 0 rgba(0,0,0,0.5)) drop-shadow(0 0 50px rgba(255,215,0,0.6))',
+                  'drop-shadow(0 4px 0 rgba(0,0,0,0.5)) drop-shadow(0 0 20px rgba(255,215,0,0.3))',
+                ],
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              ⚔️ GRAND FINAL ⚔️
+            </motion.h2>
+            <motion.p
+              className="text-center text-sm text-yellow-400/70 uppercase tracking-[0.4em] font-bold mt-1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              The Bachelor Villa
+            </motion.p>
+          </motion.div>
+        )}
+
         {/* Fighters */}
         <div className="w-full max-w-4xl flex items-center justify-between mb-8">
           {/* Player 1 */}
@@ -120,22 +160,31 @@ export default function VsScreenView() {
           className="mt-4"
         >
           <motion.div
-            className="px-10 sm:px-14 py-4 sm:py-5 text-xl sm:text-2xl font-black uppercase tracking-[0.25em]
-              border-2 border-yellow-400/50 text-yellow-300 rounded-xl
-              bg-gradient-to-r from-red-500/10 via-yellow-500/10 to-red-500/10 backdrop-blur-sm"
+            className={`px-10 sm:px-14 py-4 sm:py-5 text-xl sm:text-2xl font-black uppercase tracking-[0.25em]
+              border-2 border-yellow-400/50 text-yellow-300 rounded-xl backdrop-blur-sm
+              ${isFinal
+                ? 'bg-gradient-to-r from-yellow-500/20 via-orange-500/20 to-red-500/20 text-2xl sm:text-3xl'
+                : 'bg-gradient-to-r from-red-500/10 via-yellow-500/10 to-red-500/10'}`}
             animate={{
               borderColor: [
                 'rgba(250,204,21,0.3)',
-                'rgba(250,204,21,0.9)',
+                'rgba(250,204,21,1)',
                 'rgba(250,204,21,0.3)',
               ],
-              boxShadow: [
-                '0 0 20px rgba(250,204,21,0.1)',
-                '0 0 60px rgba(250,204,21,0.4)',
-                '0 0 20px rgba(250,204,21,0.1)',
-              ],
+              boxShadow: isFinal
+                ? [
+                    '0 0 30px rgba(250,204,21,0.2), inset 0 0 20px rgba(250,204,21,0.1)',
+                    '0 0 80px rgba(250,204,21,0.6), inset 0 0 40px rgba(250,204,21,0.2)',
+                    '0 0 30px rgba(250,204,21,0.2), inset 0 0 20px rgba(250,204,21,0.1)',
+                  ]
+                : [
+                    '0 0 20px rgba(250,204,21,0.1)',
+                    '0 0 60px rgba(250,204,21,0.4)',
+                    '0 0 20px rgba(250,204,21,0.1)',
+                  ],
+              scale: isFinal ? [1, 1.04, 1] : [1],
             }}
-            transition={{ duration: 1.5, repeat: Infinity }}
+            transition={{ duration: isFinal ? 1.2 : 1.5, repeat: Infinity }}
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.94 }}
           >

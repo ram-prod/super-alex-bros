@@ -54,7 +54,8 @@ function MapCard({ map, index }) {
 }
 
 export default function MapSelectView() {
-  const maps = useGameStore((s) => s.maps);
+  const allMaps = useGameStore((s) => s.maps);
+  const maps = allMaps.filter((m) => !m.isSecret);
   const goBack = useGameStore((s) => s.goBack);
 
   return (

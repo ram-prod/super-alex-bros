@@ -120,7 +120,7 @@ const useGameStore = create((set, get) => ({
           pools: {},
           poolCount: 0,
           tournamentPhase: 'knockout',
-          pendingMatches: [{ p1Id: ids[0], p2Id: ids[1], pool: null, round: 'Final', label: 'GRAND FINAL' }],
+          pendingMatches: [{ p1Id: ids[0], p2Id: ids[1], pool: null, round: 'Final', label: 'GRAND FINAL', isFinal: true }],
           completedMatches: [],
           knockoutRounds: [{ round: 'Final', matches: [{ p1Id: ids[0], p2Id: ids[1], completed: false, winnerId: null }] }],
           isTournamentOver: false,
@@ -191,7 +191,7 @@ const useGameStore = create((set, get) => ({
         const standings = getPoolStandings(pools.A, players);
         qualifierIds = standings.slice(0, 2).map((p) => p.id);
         knockoutMatches = [
-          { p1Id: qualifierIds[0], p2Id: qualifierIds[1], round: 'Final', label: 'GRAND FINAL', completed: false, winnerId: null },
+          { p1Id: qualifierIds[0], p2Id: qualifierIds[1], round: 'Final', label: 'GRAND FINAL', isFinal: true, completed: false, winnerId: null },
         ];
       } else if (poolCount === 2) {
         // Top 2 from each pool → Semi-Finals: A1 vs B2, B1 vs A2
@@ -234,7 +234,7 @@ const useGameStore = create((set, get) => ({
         } else {
           // 2 fighters: direct final
           knockoutMatches = [
-            { p1Id: semiFighters[0].id, p2Id: semiFighters[1].id, round: 'Final', label: 'GRAND FINAL', completed: false, winnerId: null },
+            { p1Id: semiFighters[0].id, p2Id: semiFighters[1].id, round: 'Final', label: 'GRAND FINAL', isFinal: true, completed: false, winnerId: null },
           ];
         }
       }
@@ -282,11 +282,11 @@ const useGameStore = create((set, get) => ({
       if (lastRound.round === 'SF') {
         if (roundWinnerIds.length === 2) {
           nextMatches = [
-            { p1Id: roundWinnerIds[0], p2Id: roundWinnerIds[1], round: 'Final', label: 'GRAND FINAL', completed: false, winnerId: null },
+            { p1Id: roundWinnerIds[0], p2Id: roundWinnerIds[1], round: 'Final', label: 'GRAND FINAL', isFinal: true, completed: false, winnerId: null },
           ];
         } else if (roundWinnerIds.length === 1 && _byePlayerId) {
           nextMatches = [
-            { p1Id: roundWinnerIds[0], p2Id: _byePlayerId, round: 'Final', label: 'GRAND FINAL', completed: false, winnerId: null },
+            { p1Id: roundWinnerIds[0], p2Id: _byePlayerId, round: 'Final', label: 'GRAND FINAL', isFinal: true, completed: false, winnerId: null },
           ];
         }
       }
