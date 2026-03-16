@@ -11,12 +11,21 @@ const FIGHTER_EMOJI = {
 const ROUND_HEADERS = { Prelims: '🥊 PRELIMS', QF: '⚔️ QUARTER-FINALS', SF: '🔥 SEMI-FINALS', Final: '👑 GRAND FINAL' };
 
 // --- Compact player row ---
-function PlayerSlot({ player, isWinner, isVip, isWildcard }) {
-  if (!player) return (
-    <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-gray-800/30 border border-dashed border-gray-700/30">
-      <span className="text-xs text-gray-600 italic">TBD</span>
-    </div>
-  );
+function PlayerSlot({ player, placeholder, isWinner, isVip, isWildcard }) {
+  if (!player) {
+    // Show placeholder label or TBD
+    const label = placeholder
+      ? placeholder.startsWith('W_') ? `Winner ${placeholder.split('_').slice(1).join(' ')}`
+      : placeholder.startsWith('WC_') ? `🃏 Wildcard ${+placeholder.split('_')[1] + 1}`
+      : placeholder.startsWith('VIP_') ? '👑 VIP Bye'
+      : 'TBD'
+      : 'TBD';
+    return (
+      <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-gray-800/30 border border-dashed border-gray-700/30">
+        <span className="text-[10px] text-gray-500 italic truncate">{label}</span>
+      </div>
+    );
+  }
   const charId = player.chosenCharacter;
   const emoji = FIGHTER_EMOJI[charId] || '❓';
 
@@ -34,8 +43,10 @@ function PlayerSlot({ player, isWinner, isVip, isWildcard }) {
 }
 
 function MatchCard({ match, players, vipPlayerIds, selectedWildcards, isActive }) {
-  const p1 = match.p1Id ? players.find((p) => p.id === match.p1Id) : null;
-  const p2 = match.p2Id ? players.find((p) => p.id === match.p2Id) : null;
+  const p1 = typeof match.p1Id === 'number' ? players.find((p) => p.id === match.p1Id) : null;
+  const p2 = typeof match.p2Id === 'number' ? players.find((p) => p.id === match.p2Id) : null;
+  const p1Placeholder = typeof match.p1Id === 'string' ? match.p1Id : null;
+  const p2Placeholder = typeof match.p2Id === 'string' ? match.p2Id : null;
 
   return (
     <div className={`rounded-lg border p-1.5 space-y-0.5 min-w-0 transition-all ${
@@ -45,10 +56,10 @@ function MatchCard({ match, players, vipPlayerIds, selectedWildcards, isActive }
         ? 'border-green-500/20 bg-gray-900/40'
         : 'border-gray-700/30 bg-gray-900/40'
     }`}>
-      <PlayerSlot player={p1} isWinner={match.completed && match.winnerId === p1?.id}
+      <PlayerSlot player={p1} placeholder={p1Placeholder} isWinner={match.completed && match.winnerId === p1?.id}
         isVip={vipPlayerIds?.includes(p1?.id)} isWildcard={selectedWildcards?.includes(p1?.id)} />
       <div className="text-center text-[8px] text-gray-600 font-bold">VS</div>
-      <PlayerSlot player={p2} isWinner={match.completed && match.winnerId === p2?.id}
+      <PlayerSlot player={p2} placeholder={p2Placeholder} isWinner={match.completed && match.winnerId === p2?.id}
         isVip={vipPlayerIds?.includes(p2?.id)} isWildcard={selectedWildcards?.includes(p2?.id)} />
     </div>
   );
