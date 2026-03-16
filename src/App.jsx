@@ -8,6 +8,7 @@ import MapSelectView from './components/MapSelectView';
 import VsScreenView from './components/VsScreenView';
 import BattleView from './components/BattleView';
 import VictoryView from './components/VictoryView';
+import RulesView from './components/RulesView';
 
 const views = {
   splash: SplashView,
@@ -17,6 +18,7 @@ const views = {
   vs_screen: VsScreenView,
   battle: BattleView,
   victory: VictoryView,
+  rules: RulesView,
 };
 
 function App() {
