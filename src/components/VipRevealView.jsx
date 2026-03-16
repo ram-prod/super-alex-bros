@@ -48,23 +48,27 @@ export default function VipRevealView() {
         <motion.div className="mb-8"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}>
           <p className="text-2xl font-black text-yellow-300 mb-2">{vipPlayer?.name}</p>
-          <p className="text-gray-400 text-xl sm:text-2xl">
+          <p className="text-sm sm:text-base font-bold uppercase tracking-widest text-gray-300 drop-shadow-md mb-2">
             The Bachelor gets an automatic bye to the next round! 👑
           </p>
-          <p className="text-gray-500 text-lg sm:text-xl mt-2">
+          <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-gray-400 drop-shadow-md mt-2">
             He watches the bloodbath from his throne.
           </p>
         </motion.div>
 
         <motion.button
           onClick={handleProceed}
-          className="px-10 py-4 rounded-xl font-black text-lg uppercase tracking-wider
-            bg-gradient-to-r from-yellow-500 to-orange-500 text-black border-2 border-yellow-400/50"
+          className="group"
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2 }}
-          whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(250,204,21,0.3)' }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          📊 PROCEED TO BRACKET
+          <div className="px-10 py-4 border-2 border-yellow-400/50 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-sm group-hover:border-yellow-400 group-hover:shadow-[0_0_40px_rgba(250,204,21,0.3)] transition-all duration-200"
+            style={{ transform: 'skewX(-10deg)' }}>
+            <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-lg text-yellow-300">
+              📊 PROCEED TO BRACKET
+            </div>
+          </div>
         </motion.button>
       </div>
     </div>

@@ -29,7 +29,7 @@ export default function ConfirmationView() {
           ARE YOU READY?
         </motion.h1>
 
-        <motion.p className="text-gray-400 text-sm mb-8"
+        <motion.p className="text-sm sm:text-base font-bold uppercase tracking-widest text-gray-300 drop-shadow-md mb-8"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           {players.length} fighters are about to enter the arena
         </motion.p>

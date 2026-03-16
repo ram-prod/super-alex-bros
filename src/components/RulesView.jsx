@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
+import BackButton from './BackButton';
 
 const SLIDES = [
   {
@@ -61,15 +62,7 @@ export default function RulesView() {
 
       {/* Back button */}
       <div className="relative z-20 p-4 sm:p-6">
-        <motion.button
-          onClick={() => useGameStore.setState({ gamePhase: 'splash' })}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group"
-          whileHover={{ x: -4 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <span className="text-xl group-hover:text-yellow-400 transition-colors">←</span>
-          <span className="text-sm font-bold uppercase tracking-widest">Back to Menu</span>
-        </motion.button>
+        <BackButton onClick={() => useGameStore.setState({ gamePhase: 'splash' })} label="Menu" />
       </div>
 
       {/* Slide content */}
@@ -122,7 +115,7 @@ export default function RulesView() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ type: 'tween', ease: 'easeOut', duration: 0.4, delay: 0.2 }}
             >
-              <p className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-relaxed">
+              <p className="text-lg sm:text-xl md:text-2xl font-bold uppercase tracking-widest text-gray-300 drop-shadow-md leading-relaxed">
                 {slide.body}
               </p>
             </motion.div>

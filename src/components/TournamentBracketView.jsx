@@ -42,26 +42,32 @@ function PlayerSlot({ player, placeholder, isWinner, isVip, isWildcard }) {
   );
 }
 
-function MatchCard({ match, players, vipPlayerId, selectedWildcards, isActive }) {
+function MatchCard({ match, players, vipPlayerId, selectedWildcards, isActive, animDelay = 0 }) {
   const p1 = typeof match.p1Id === 'number' ? players.find((p) => p.id === match.p1Id) : null;
   const p2 = typeof match.p2Id === 'number' ? players.find((p) => p.id === match.p2Id) : null;
   const p1Placeholder = typeof match.p1Id === 'string' ? match.p1Id : null;
   const p2Placeholder = typeof match.p2Id === 'string' ? match.p2Id : null;
 
   return (
-    <div className={`rounded-lg border p-1.5 space-y-0.5 min-w-0 transition-all ${
-      isActive && !match.completed
-        ? 'border-yellow-500/40 bg-yellow-500/5 shadow-[0_0_12px_rgba(250,204,21,0.1)]'
-        : match.completed
-        ? 'border-green-500/20 bg-gray-900/40'
-        : 'border-gray-700/30 bg-gray-900/40'
-    }`}>
-      <PlayerSlot player={p1} placeholder={p1Placeholder} isWinner={match.completed && match.winnerId === p1?.id}
-        isVip={p1?.id === vipPlayerId} isWildcard={selectedWildcards?.includes(p1?.id)} />
-      <div className="text-center text-[8px] text-gray-600 font-bold">VS</div>
-      <PlayerSlot player={p2} placeholder={p2Placeholder} isWinner={match.completed && match.winnerId === p2?.id}
-        isVip={p2?.id === vipPlayerId} isWildcard={selectedWildcards?.includes(p2?.id)} />
-    </div>
+    <motion.div
+      initial={{ opacity: 0, x: -15 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: animDelay, duration: 0.3, type: 'tween', ease: 'easeOut' }}
+    >
+      <div className={`rounded-lg border p-1.5 space-y-0.5 min-w-0 transition-all ${
+        isActive && !match.completed
+          ? 'border-yellow-500/40 bg-yellow-500/5 shadow-[0_0_12px_rgba(250,204,21,0.1)]'
+          : match.completed
+          ? 'border-green-500/20 bg-gray-900/40'
+          : 'border-gray-700/30 bg-gray-900/40'
+      }`}>
+        <PlayerSlot player={p1} placeholder={p1Placeholder} isWinner={match.completed && match.winnerId === p1?.id}
+          isVip={p1?.id === vipPlayerId} isWildcard={selectedWildcards?.includes(p1?.id)} />
+        <div className="text-center text-[8px] text-gray-600 font-bold">VS</div>
+        <PlayerSlot player={p2} placeholder={p2Placeholder} isWinner={match.completed && match.winnerId === p2?.id}
+          isVip={p2?.id === vipPlayerId} isWildcard={selectedWildcards?.includes(p2?.id)} />
+      </div>
+    </motion.div>
   );
 }
 
@@ -338,10 +344,10 @@ export default function TournamentBracketView() {
                   <div className="flex flex-col flex-1 min-w-0 max-w-[280px] sm:max-w-[320px]">
                     {/* Round label */}
                     <div className={`text-center mb-2 ${isActiveRound ? 'text-yellow-400' : 'text-gray-500'}`}>
-                      <div className="text-[10px] font-black uppercase tracking-wider">
+                      <div className="text-xs sm:text-sm font-black uppercase tracking-widest drop-shadow-sm">
                         {ROUND_HEADERS[round.round] || round.round}
                       </div>
-                      <div className="text-[8px] font-mono text-gray-600">
+                      <div className="text-[10px] font-mono text-gray-600">
                         {round.matches.filter((m) => m.completed).length}/{round.matches.length}
                       </div>
                     </div>
@@ -363,6 +369,7 @@ export default function TournamentBracketView() {
                           vipPlayerId={vipPlayerId}
                           selectedWildcards={selectedWildcards}
                           isActive={isActiveRound}
+                          animDelay={0.1 + (roundIdx * 0.15) + (mIdx * 0.05)}
                         />
                       ))}
                     </div>
@@ -394,7 +401,7 @@ export default function TournamentBracketView() {
           initial={{ y: 80 }} animate={{ y: 0 }} transition={{ type: 'tween', ease: 'easeOut', duration: 0.4 }}>
           <div className="bg-gradient-to-t from-black via-black/95 to-transparent pt-6 pb-4 px-4">
             <div className="max-w-md mx-auto text-center">
-              <p className="text-purple-300 text-xs uppercase tracking-widest font-bold mb-3">
+              <p className="text-sm font-bold uppercase tracking-widest text-purple-300 drop-shadow-md mb-4">
                 🃏 {wildcardCandidates.length} fighters eliminated — wildcards must be drawn!
               </p>
               <motion.button
@@ -453,7 +460,7 @@ export default function TournamentBracketView() {
           <div className="bg-gradient-to-t from-black via-black/95 to-transparent pt-6 pb-6 px-4">
             <div className="max-w-md mx-auto text-center bg-gray-900/80 border border-yellow-500/50 rounded-2xl p-5 shadow-[0_0_40px_rgba(250,204,21,0.2)]">
               <h3 className="text-2xl font-black text-yellow-400 mb-1">🏆 TOURNAMENT COMPLETE!</h3>
-              <p className="text-gray-400 text-xs uppercase tracking-widest font-mono mb-4">All matches have been played</p>
+              <p className="text-sm font-bold uppercase tracking-widest text-gray-300 drop-shadow-md mb-5">All matches have been played</p>
               <motion.button
                 onClick={() => useGameStore.setState({ gamePhase: 'victory' })}
                 className="group w-full"

@@ -55,7 +55,7 @@ export default function VipRouletteView() {
           VIP ROULETTE
         </motion.h1>
 
-        <motion.p className="text-gray-400 text-lg sm:text-xl mb-8"
+        <motion.p className="text-sm sm:text-base font-bold uppercase tracking-widest text-gray-300 drop-shadow-md mb-8"
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           One lucky fighter gets an automatic bye to the next round! 👑
         </motion.p>
@@ -88,12 +88,16 @@ export default function VipRouletteView() {
               </motion.div>
 
               <motion.button onClick={handleProceed}
-                className="mt-6 px-10 py-4 rounded-xl font-black text-lg uppercase tracking-wider
-                  bg-gradient-to-r from-yellow-500 to-orange-500 text-black border-2 border-yellow-400/50"
+                className="group mt-6"
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5 }}
-                whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(250,204,21,0.3)' }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}>
-                📊 PROCEED TO BRACKET
+                <div className="px-10 py-4 border-2 border-yellow-400/50 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-sm group-hover:border-yellow-400 group-hover:shadow-[0_0_40px_rgba(250,204,21,0.3)] transition-all duration-200"
+                  style={{ transform: 'skewX(-10deg)' }}>
+                  <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-lg text-yellow-300">
+                    📊 PROCEED TO BRACKET
+                  </div>
+                </div>
               </motion.button>
             </motion.div>
           )}
@@ -103,15 +107,16 @@ export default function VipRouletteView() {
         {phase === 'intro' && (
           <>
             <motion.button onClick={() => setPhase('spinning')}
-              className="px-10 py-4 rounded-xl font-black text-xl uppercase tracking-wider
-                bg-gradient-to-r from-yellow-500 to-orange-500 text-black border-2 border-yellow-400/50"
-              animate={{
-                boxShadow: ['0 0 20px rgba(250,204,21,0.2)', '0 0 50px rgba(250,204,21,0.5)', '0 0 20px rgba(250,204,21,0.2)'],
-                scale: [1, 1.03, 1],
-              }}
+              className="group"
+              animate={{ scale: [1, 1.03, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
               whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}>
-              🎰 SPIN FOR VIP
+              <div className="px-10 py-4 border-2 border-yellow-400/50 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-sm group-hover:border-yellow-400 group-hover:shadow-[0_0_50px_rgba(250,204,21,0.5)] transition-all duration-200"
+                style={{ transform: 'skewX(-10deg)' }}>
+                <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-xl text-yellow-300">
+                  🎰 SPIN FOR VIP
+                </div>
+              </div>
             </motion.button>
 
             <motion.div className="mt-8 flex flex-wrap justify-center gap-2"
