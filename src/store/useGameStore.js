@@ -289,26 +289,12 @@ const useGameStore = create((set, get) => ({
 
         const nextMatches = r.matches.map((m) => ({ ...m }));
 
-        // For prelims without wildcards, we also need to slot bye players.
-        // Winners + existing byes fill the slots.
-        // Standard bracket mapping: match i winner → next round match floor(i/2), alternating p1/p2
-        for (let mi = 0; mi < currentRound.matches.length; mi++) {
-          const targetMatchIdx = Math.floor(mi / 2);
-          const targetSlot = mi % 2 === 0 ? 'p1Id' : 'p2Id';
-
-          if (targetMatchIdx < nextMatches.length) {
-            // Only fill if the slot is still empty (byes may have pre-filled some)
-            if (nextMatches[targetMatchIdx][targetSlot] === null) {
-              nextMatches[targetMatchIdx][targetSlot] = winnerIds[mi];
-            } else {
-              // Slot taken by a bye, fill the other slot
-              const otherSlot = targetSlot === 'p1Id' ? 'p2Id' : 'p1Id';
-              if (nextMatches[targetMatchIdx][otherSlot] === null) {
-                nextMatches[targetMatchIdx][otherSlot] = winnerIds[mi];
-              }
-            }
-          }
-        }
+        // Queue-based slot filling: winners fill empty slots left-to-right
+        const winnersQueue = [...winnerIds];
+        nextMatches.forEach((m) => {
+          if (m.p1Id === null && winnersQueue.length > 0) m.p1Id = winnersQueue.shift();
+          if (m.p2Id === null && winnersQueue.length > 0) m.p2Id = winnersQueue.shift();
+        });
 
         return { ...r, matches: nextMatches };
       });
@@ -486,7 +472,17 @@ const useGameStore = create((set, get) => ({
   goBack: () =>
     set((state) => {
       if (state.gamePhase === 'map_select') return { gamePhase: 'tournament_overview' };
-      if (state.gamePhase === 'tournament_overview') return { gamePhase: 'roster_select' };
+      if (state.gamePhase === 'tournament_overview') return {
+        gamePhase: 'roster_select',
+        knockoutRounds: [],
+        pendingMatches: [],
+        completedMatches: [],
+        vipPlayerIds: [],
+        wildcardCandidates: [],
+        selectedWildcards: [],
+        bracketConfig: null,
+        bracketStage: 'prelims',
+      };
       if (state.gamePhase === 'roster_select') return { gamePhase: 'splash' };
       return {};
     }),
