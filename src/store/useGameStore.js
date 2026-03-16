@@ -104,7 +104,7 @@ const useGameStore = create(
   startMusic: () => set({ isMusicPlaying: true }),
   toggleMute: () => set((state) => ({ isMuted: !state.isMuted })),
   setBgmState: (newState, newTrack) => set((state) => ({ bgmState: newState, currentTrack: newTrack || state.currentTrack })),
-  playSFX: (sfxId) => { try { const audio = new Audio(`/assets/audio/${sfxId}.mp3`); audio.volume = 1.0; audio.play().catch(() => {}); } catch (e) {} },
+  playSFX: (sfxId, vol = 1.0) => { try { const audio = new Audio(`/assets/audio/${sfxId}.mp3`); audio.volume = vol; audio.play().catch(() => {}); } catch (e) {} },
 
   // Tournament end
   tournamentWinner: null,

@@ -8,7 +8,7 @@ function MapCard({ map, index }) {
   return (
     <motion.button
       onClick={() => selectMap(map.id)}
-      data-sound="special"
+      data-sound="epic"
       className="relative group rounded-xl overflow-hidden border-2 border-gray-700/40
         hover:border-cyan-400/60 transition-colors duration-300 focus:outline-none
         w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)]"

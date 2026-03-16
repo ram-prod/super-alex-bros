@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
 import BackButton from './BackButton';
@@ -195,6 +196,13 @@ function PlayerTabs() {
 export default function RosterView() {
   const { players, currentTurn, characters, tournamentSize, confirmRoster, goBack } = useGameStore();
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      useGameStore.getState().playSFX('announcer_roster', 1.0);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   const currentPlayer = players.find((p) => p.id === currentTurn);
   const allLocked = players.every((p) => p.chosenCharacter !== null);
   const lockedCount = players.filter((p) => p.chosenCharacter !== null).length;
@@ -308,6 +316,7 @@ export default function RosterView() {
           >
             <motion.button
               onClick={confirmRoster}
+              data-sound="epic"
               className="group w-full max-w-md mx-auto block"
               animate={{ scale: [1, 1.02, 1] }}
               transition={{ duration: 2, repeat: Infinity }}

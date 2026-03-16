@@ -49,7 +49,7 @@ export default function ConfirmationView() {
         <div className="flex flex-col gap-3 max-w-sm mx-auto">
           <motion.button
             onClick={evaluateVipPhase}
-            data-sound="special"
+            data-sound="epic"
             className="group w-full"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
             whileHover={{ scale: 1.03 }}

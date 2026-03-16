@@ -88,8 +88,14 @@ function App() {
     const handler = (e) => {
       const btn = e.target.closest('button');
       if (!btn) return;
-      const sfx = btn.dataset.sound === 'special' ? 'click_special' : 'click';
-      useGameStore.getState().playSFX(sfx);
+      const sfxType = btn.dataset.sound;
+      if (sfxType === 'epic') {
+        useGameStore.getState().playSFX('click_epic', 1.0);
+      } else if (sfxType === 'special') {
+        useGameStore.getState().playSFX('click_special', 0.8);
+      } else {
+        useGameStore.getState().playSFX('click', 1.0);
+      }
     };
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);

@@ -44,8 +44,8 @@ export default function VictoryView() {
       timers.push(setTimeout(() => setAnimStep(2), 6500));
       timers.push(setTimeout(() => {
         setAnimStep(3);
-        useGameStore.getState().playSFX('sike');
-        useGameStore.getState().playSFX('smash');
+        useGameStore.getState().playSFX('sike', 0.7);
+        useGameStore.getState().playSFX('smash', 1.0);
       }, 11000)); // SIKE at 11s
       timers.push(setTimeout(() => setAnimStep(4), 13500)); // Alexander reveal at 13.5s
     }
