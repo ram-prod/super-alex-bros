@@ -49,23 +49,31 @@ export default function ConfirmationView() {
         <div className="flex flex-col gap-3 max-w-sm mx-auto">
           <motion.button
             onClick={evaluateVipPhase}
-            className="w-full py-4 rounded-xl font-black text-xl uppercase tracking-wider
-              bg-gradient-to-r from-yellow-500 to-orange-500 text-black border-2 border-yellow-400/50"
+            className="group w-full"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
-            whileHover={{ scale: 1.03, boxShadow: '0 0 40px rgba(250,204,21,0.3)' }}
+            whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.95 }}
           >
-            ⚔️ LET&apos;S GO!
+            <div className="w-full py-4 border-2 border-yellow-400/50 bg-yellow-500/10 rounded-sm group-hover:bg-yellow-500/20 group-hover:border-yellow-400 group-hover:shadow-[0_0_40px_rgba(250,204,21,0.3)] transition-all duration-200"
+              style={{ transform: 'skewX(-10deg)' }}>
+              <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-xl text-yellow-300">
+                ⚔️ LET&apos;S GO!
+              </div>
+            </div>
           </motion.button>
 
           <motion.button
             onClick={goBack}
-            className="w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider
-              text-gray-400 border border-gray-700 hover:border-gray-500 hover:text-white transition-colors"
+            className="group w-full"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}
             whileTap={{ scale: 0.95 }}
           >
-            ← BACK TO ROSTER
+            <div className="w-full py-3 border-2 border-gray-700 bg-gray-900/50 rounded-sm group-hover:border-gray-500 group-hover:bg-gray-800/30 transition-all duration-200"
+              style={{ transform: 'skewX(-10deg)' }}>
+              <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-sm text-gray-400 group-hover:text-white transition-colors">
+                ← BACK TO ROSTER
+              </div>
+            </div>
           </motion.button>
         </div>
       </div>

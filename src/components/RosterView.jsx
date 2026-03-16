@@ -120,9 +120,10 @@ function SizeSelector() {
         whileTap={{ scale: 0.85 }}
         onClick={() => setTournamentSize(tournamentSize - 1)}
         disabled={tournamentSize <= 2}
-        className="w-10 h-10 rounded-lg bg-gray-800 border border-gray-600 text-xl font-bold text-white hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+        className="w-10 h-10 rounded-sm bg-gray-800 border-2 border-gray-600 text-white hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+        style={{ transform: 'skewX(-10deg)' }}
       >
-        −
+        <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-xl">−</div>
       </motion.button>
       <div className="text-center min-w-[140px]">
         <div className="text-3xl font-black text-white">{tournamentSize}</div>
@@ -132,9 +133,10 @@ function SizeSelector() {
         whileTap={{ scale: 0.85 }}
         onClick={() => setTournamentSize(tournamentSize + 1)}
         disabled={tournamentSize >= 11}
-        className="w-10 h-10 rounded-lg bg-gray-800 border border-gray-600 text-xl font-bold text-white hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+        className="w-10 h-10 rounded-sm bg-gray-800 border-2 border-gray-600 text-white hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+        style={{ transform: 'skewX(-10deg)' }}
       >
-        +
+        <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-xl">+</div>
       </motion.button>
     </div>
   );
@@ -155,17 +157,18 @@ function PlayerTabs() {
           <motion.button
             key={p.id}
             onClick={() => useGameStore.setState({ currentTurn: p.id })}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border transition-all
+            className={`px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wide border-2 transition-all
               ${isActive
-                ? 'border-yellow-400 bg-yellow-400/10 text-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.3)]'
+                ? 'border-purple-400 bg-purple-500/20 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.4)]'
                 : hasChar
                   ? 'border-gray-600 bg-gray-800/80 text-gray-300'
                   : 'border-gray-700/50 bg-gray-900/50 text-gray-500'
               }`}
+            style={{ transform: 'skewX(-10deg)' }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <span className="flex items-center gap-1.5">
+            <div style={{ transform: 'skewX(10deg)' }} className="flex items-center gap-1.5">
               {hasChar && (
                 <span
                   className="w-2 h-2 rounded-full inline-block"
@@ -178,7 +181,7 @@ function PlayerTabs() {
                   {FIGHTER_EMOJI[p.chosenCharacter]}
                 </span>
               )}
-            </span>
+            </div>
           </motion.button>
         );
       })}
@@ -210,7 +213,7 @@ export default function RosterView() {
           <BackButton onClick={goBack} label="Title" />
         </div>
         <motion.h1
-          className="text-4xl sm:text-5xl font-black tracking-tight mb-1"
+          className="text-4xl sm:text-5xl text-smash tracking-tight mb-1"
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
@@ -302,23 +305,18 @@ export default function RosterView() {
           >
             <motion.button
               onClick={confirmRoster}
-              className="w-full max-w-md mx-auto block py-4 px-8 rounded-2xl text-xl font-black uppercase tracking-widest
-                bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500
-                text-black shadow-[0_0_60px_rgba(250,204,21,0.4)]
-                hover:shadow-[0_0_80px_rgba(250,204,21,0.6)]"
-              animate={{
-                scale: [1, 1.02, 1],
-                boxShadow: [
-                  '0 0 40px rgba(250,204,21,0.3)',
-                  '0 0 70px rgba(250,204,21,0.5)',
-                  '0 0 40px rgba(250,204,21,0.3)',
-                ],
-              }}
+              className="group w-full max-w-md mx-auto block"
+              animate={{ scale: [1, 1.02, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
             >
-              ⚡ START TOURNAMENT ⚡
+              <div className="py-4 px-8 rounded-sm border-4 border-pink-500 bg-gradient-to-r from-purple-900/80 via-pink-900/80 to-purple-900/80 group-hover:shadow-[0_0_60px_rgba(236,72,153,0.5)] transition-all duration-200"
+                style={{ transform: 'skewX(-10deg)' }}>
+                <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-2xl text-pink-100">
+                  ⚡ START TOURNAMENT ⚡
+                </div>
+              </div>
             </motion.button>
           </motion.div>
         )}

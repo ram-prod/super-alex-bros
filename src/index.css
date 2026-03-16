@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+@layer components {
+  .text-smash {
+    @apply font-black italic uppercase tracking-wider drop-shadow-lg;
+  }
+  .panel-smash {
+    @apply bg-black/90 backdrop-blur-md border-4 rounded-none;
+    transform: skewX(-3deg);
+  }
+  .panel-smash-content {
+    transform: skewX(3deg);
+  }
+}

@@ -125,10 +125,10 @@ export default function SplashView() {
               className="relative"
             >
               <motion.div
-                className="px-14 py-5 text-2xl sm:text-3xl font-black uppercase tracking-[0.35em]
-                  border-2 border-yellow-400/50 text-yellow-300 rounded-xl
+                className="px-14 py-5 border-2 border-yellow-400/50 text-yellow-300 rounded-sm
                   bg-yellow-500/10 backdrop-blur-sm
                   hover:bg-yellow-500/20 hover:border-yellow-400 transition-colors"
+                style={{ transform: 'skewX(-10deg)' }}
                 animate={{
                   borderColor: ['rgba(250,204,21,0.3)', 'rgba(250,204,21,0.8)', 'rgba(250,204,21,0.3)'],
                   boxShadow: [
@@ -141,7 +141,9 @@ export default function SplashView() {
                 whileHover={{ scale: 1.06 }}
                 whileTap={{ scale: 0.94 }}
               >
-                PRESS START
+                <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-3xl tracking-[0.35em]">
+                  PRESS START
+                </div>
               </motion.div>
             </motion.button>
           )}
@@ -176,23 +178,15 @@ export default function SplashView() {
                   initial={{ opacity: 0, x: i % 2 === 0 ? -60 : 60 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ type: 'tween', ease: 'easeOut', duration: 0.4, delay: 0.3 + i * 0.12 }}
-                  className="group relative"
+                  className="group"
                 >
-                  <motion.div
-                    className="px-8 py-5 text-xl sm:text-2xl font-black uppercase tracking-wider
-                      border-2 border-orange-400/30 text-white rounded-xl
-                      bg-black/50 backdrop-blur-md
-                      flex items-center justify-center gap-4
-                      hover:bg-orange-500/15 transition-colors duration-200"
-                    whileHover={{
-                      scale: 1.04,
-                      borderColor: 'rgba(251,146,60,0.9)',
-                      boxShadow: '0 0 40px rgba(251,146,60,0.3), inset 0 0 20px rgba(251,146,60,0.08)',
-                    }}
-                    whileTap={{ scale: 0.96 }}
-                  >
-                    <span className="text-2xl">{item.icon}</span>
-                    <span>{item.label}</span>
+                  <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                    <div className="flex items-center gap-4 px-8 py-5 border-2 border-orange-500/50 bg-black/80 backdrop-blur-md text-white rounded-sm group-hover:border-orange-400 group-hover:bg-orange-500/20 group-hover:shadow-[0_0_30px_rgba(249,115,22,0.4)] transition-all duration-200"
+                      style={{ transform: 'skewX(-10deg)' }}>
+                      <div style={{ transform: 'skewX(10deg)' }} className="flex items-center gap-4 text-smash text-xl sm:text-2xl">
+                        <span className="text-2xl drop-shadow-md">{item.icon}</span><span>{item.label}</span>
+                      </div>
+                    </div>
                   </motion.div>
                 </motion.button>
               ))}
