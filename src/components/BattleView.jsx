@@ -245,6 +245,11 @@ export default function BattleView() {
       const loserIsP1 = player1?.id === pendingLoserId;
       const currentDmg = loserIsP1 ? p1Damage : p2Damage;
       const isKO = currentDmg >= 100;
+      const isFirstHitOnPlayer = currentDmg === 0;
+
+      if (isFirstHitOnPlayer) {
+        useGameStore.getState().playSFX('first_blood');
+      }
 
       if (isKO) {
         useGameStore.getState().setBgmState('faded');
