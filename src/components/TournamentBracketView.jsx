@@ -95,7 +95,8 @@ function WildcardRoulette({ candidates, players, onComplete }) {
     const timeout = setTimeout(() => {
       clearInterval(interval);
       const shuffled = [...candidatePlayers].sort(() => Math.random() - 0.5);
-      setRevealed([shuffled[0], shuffled[1]]);
+      const count = useGameStore.getState().bracketConfig?.wildcards || 1;
+      setRevealed(shuffled.slice(0, count));
       setPhase('reveal');
     }, 3000);
     return () => { clearInterval(interval); clearTimeout(timeout); };
@@ -135,7 +136,9 @@ function WildcardRoulette({ candidates, players, onComplete }) {
         <AnimatePresence>
           {phase === 'reveal' && (
             <motion.div className="mb-8 space-y-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
-              <div className="text-purple-400 text-xs uppercase tracking-widest font-bold mb-3">🃏 The Wildcards Are...</div>
+              <div className="text-purple-400 text-xs uppercase tracking-widest font-bold mb-3">
+                {revealed.length === 1 ? '🃏 The Wildcard Is...' : '🃏 The Wildcards Are...'}
+              </div>
               <div className="flex justify-center gap-4">
                 {revealed.map((p, i) => (
                   <motion.div key={p.id}
@@ -202,6 +205,7 @@ export default function TournamentBracketView() {
 
   const hasStarted = completedMatches.length > 0;
   const [showRoulette, setShowRoulette] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
 
   // Generate tournament on first mount
   useEffect(() => {
@@ -251,9 +255,50 @@ export default function TournamentBracketView() {
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.04) 2px, rgba(255,255,255,0.04) 4px)' }} />
 
+      {/* Exit modal */}
+      <AnimatePresence>
+        {showExitModal && (
+          <motion.div className="absolute inset-0 z-50 flex items-center justify-center px-6"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowExitModal(false)} />
+            <motion.div
+              className="relative z-10 bg-gray-900/95 border-2 border-red-500/40 rounded-2xl p-6 max-w-sm w-full text-center shadow-[0_0_40px_rgba(239,68,68,0.15)]"
+              initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}>
+              <h3 className="text-2xl font-black text-red-400 mb-2">⚠️ End Tournament?</h3>
+              <p className="text-gray-400 text-sm mb-6">Are you sure? All progress will be lost.</p>
+              <div className="flex gap-3">
+                <motion.button
+                  onClick={() => setShowExitModal(false)}
+                  className="flex-1 py-3 rounded-xl font-bold text-sm uppercase tracking-wider text-gray-300 border border-gray-600 hover:border-gray-400 transition-colors"
+                  whileTap={{ scale: 0.95 }}>
+                  Cancel
+                </motion.button>
+                <motion.button
+                  onClick={() => useGameStore.getState().resetGame()}
+                  className="flex-1 py-3 rounded-xl font-black text-sm uppercase tracking-wider bg-red-600 text-white border-2 border-red-500/50 hover:bg-red-500 transition-colors"
+                  whileTap={{ scale: 0.95 }}>
+                  End Tournament
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="relative z-10 px-3 pt-3 pb-1 flex items-center justify-between">
-        {!hasStarted ? <BackButton onClick={() => useGameStore.getState().goBack()} /> : <div className="w-16" />}
+        {!hasStarted ? (
+          <BackButton onClick={() => useGameStore.getState().goBack()} />
+        ) : (
+          <motion.button
+            onClick={() => setShowExitModal(true)}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider text-red-400/60 border border-red-500/20 hover:border-red-500/50 hover:text-red-400 transition-colors"
+            whileTap={{ scale: 0.95 }}
+          >
+            ✕ Exit
+          </motion.button>
+        )}
         <div className="text-center">
           <h2 className="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 uppercase tracking-wider">
             {ROUND_HEADERS[activeRoundName] || 'TOURNAMENT'}

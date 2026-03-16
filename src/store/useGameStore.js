@@ -259,6 +259,17 @@ const useGameStore = create(
         rounds.push({ round: roundName, matches });
       }
 
+      // --- Immediately resolve VIP placeholders ---
+      vipIds.forEach((vipId, i) => {
+        const placeholder = `VIP_${i}`;
+        rounds.forEach((r) => {
+          r.matches.forEach((m) => {
+            if (m.p1Id === placeholder) m.p1Id = vipId;
+            if (m.p2Id === placeholder) m.p2Id = vipId;
+          });
+        });
+      });
+
       // --- Determine first active stage + pending matches ---
       const firstStage = config.prelims > 0 ? 'prelims' : config.base.toLowerCase();
       const firstRoundName = config.prelims > 0 ? 'Prelims' : config.base;
@@ -508,9 +519,9 @@ const useGameStore = create(
         return p;
       });
 
-      // Immediate winner slotting into next round (skip for prelims — wildcards handle that)
-      if (state.bracketStage !== 'prelims') {
-        const stageMap = { qf: 'QF', sf: 'SF', final: 'Final' };
+      // Immediate winner slotting into next round via placeholder resolution
+      {
+        const stageMap = { prelims: 'Prelims', qf: 'QF', sf: 'SF', final: 'Final' };
         const currentRoundName = stageMap[state.bracketStage];
         const currentRoundIdx = knockoutRounds.findIndex((r) => r.round === currentRoundName);
         if (currentRoundIdx !== -1) {
@@ -578,9 +589,10 @@ const useGameStore = create(
     }),
 
   resetGame: () =>
-    set((state) => ({
+    set(() => ({
       gamePhase: 'splash',
-      players: createPlayers(state.tournamentSize),
+      tournamentSize: 11,
+      players: createPlayers(11),
       currentTurn: 1,
       bracketStage: 'prelims',
       pendingMatches: [],
