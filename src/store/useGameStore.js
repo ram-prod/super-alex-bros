@@ -98,13 +98,15 @@ const useGameStore = create(
   hasSeenIntro: false,
   setHasSeenIntro: () => set({ hasSeenIntro: true }),
   isMusicPlaying: false,
-  isMuted: false,
+  isBgmMuted: false,
+  isSfxMuted: false,
   bgmState: 'paused',
   currentTrack: 'theme',
   startMusic: () => set({ isMusicPlaying: true }),
-  toggleMute: () => set((state) => ({ isMuted: !state.isMuted })),
+  toggleBgmMute: () => set((state) => ({ isBgmMuted: !state.isBgmMuted })),
+  toggleSfxMute: () => set((state) => ({ isSfxMuted: !state.isSfxMuted })),
   setBgmState: (newState, newTrack) => set((state) => ({ bgmState: newState, currentTrack: newTrack || state.currentTrack })),
-  playSFX: (sfxId, vol = 1.0) => { try { const audio = new Audio(`/assets/audio/${sfxId}.mp3`); audio.volume = vol; audio.play().catch(() => {}); } catch (e) {} },
+  playSFX: (sfxId, vol = 1.0) => { if (get().isSfxMuted) return; try { const audio = new Audio(`/assets/audio/${sfxId}.mp3`); audio.volume = vol; audio.play().catch(() => {}); } catch (e) {} },
 
   // Tournament end
   tournamentWinner: null,

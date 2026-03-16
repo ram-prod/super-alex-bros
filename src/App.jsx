@@ -29,10 +29,12 @@ const views = {
 
 function App() {
   const gamePhase = useGameStore((s) => s.gamePhase);
-  const isMuted = useGameStore((s) => s.isMuted);
+  const isBgmMuted = useGameStore((s) => s.isBgmMuted);
+  const isSfxMuted = useGameStore((s) => s.isSfxMuted);
   const bgmState = useGameStore((s) => s.bgmState);
   const currentTrack = useGameStore((s) => s.currentTrack);
-  const toggleMute = useGameStore((s) => s.toggleMute);
+  const toggleBgmMute = useGameStore((s) => s.toggleBgmMute);
+  const toggleSfxMute = useGameStore((s) => s.toggleSfxMute);
   const audioResetTick = useGameStore((s) => s.audioResetTick);
   const audioRef = useRef(null);
   const prevTrackRef = useRef(currentTrack);
@@ -103,8 +105,8 @@ function App() {
 
   // Mute toggle
   useEffect(() => {
-    if (audioRef.current) audioRef.current.muted = isMuted;
-  }, [isMuted]);
+    if (audioRef.current) audioRef.current.muted = isBgmMuted;
+  }, [isBgmMuted]);
 
   return (
     <>
@@ -123,12 +125,25 @@ function App() {
       </AnimatePresence>
 
       {bgmState !== 'paused' && (
-        <button
-          onClick={toggleMute}
-          className="fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 text-2xl flex items-center justify-center hover:bg-black/80 transition-colors"
-        >
-          {isMuted ? '🔇' : '🔊'}
-        </button>
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col items-center gap-2 group">
+          {/* Expanded Menu (Shows on Hover) */}
+          <div className="flex flex-col gap-2 opacity-0 translate-y-4 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200 bg-black/80 backdrop-blur-md border border-white/20 rounded-full p-2 shadow-xl">
+            <button onClick={toggleBgmMute}
+              className="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-xl transition-colors"
+              title="Toggle Music">
+              {isBgmMuted ? '🔇' : '🎵'}
+            </button>
+            <button onClick={toggleSfxMute}
+              className="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-xl transition-colors"
+              title="Toggle Sound Effects">
+              {isSfxMuted ? '🔕' : '💥'}
+            </button>
+          </div>
+          {/* Main Icon */}
+          <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 text-2xl flex items-center justify-center cursor-pointer shadow-lg group-hover:bg-black/80 transition-colors">
+            {isBgmMuted && isSfxMuted ? '🔇' : '🔊'}
+          </div>
+        </div>
       )}
     </>
   );
