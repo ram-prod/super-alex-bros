@@ -10,7 +10,6 @@ const createPlayers = (count) =>
     isEliminated: false,
     wins: 0,
     losses: 0,
-    pool: null,
   }));
 
 const shuffle = (arr) => {
@@ -22,33 +21,6 @@ const shuffle = (arr) => {
   return a;
 };
 
-// Round-robin pairs for an array of player IDs
-const roundRobin = (ids) => {
-  const matches = [];
-  for (let i = 0; i < ids.length; i++) {
-    for (let j = i + 1; j < ids.length; j++) {
-      matches.push({ p1Id: ids[i], p2Id: ids[j] });
-    }
-  }
-  return shuffle(matches);
-};
-
-// Distribute N ids into K pools as evenly as possible
-const splitIntoPools = (ids, poolCount) => {
-  const labels = ['A', 'B', 'C'];
-  const pools = {};
-  for (let k = 0; k < poolCount; k++) pools[labels[k]] = [];
-  ids.forEach((id, i) => pools[labels[i % poolCount]].push(id));
-  return pools;
-};
-
-// Get sorted standings for a pool
-const getPoolStandings = (poolIds, players) => {
-  return poolIds
-    .map((id) => players.find((p) => p.id === id))
-    .sort((a, b) => b.wins - a.wins || a.losses - b.losses);
-};
-
 const useGameStore = create((set, get) => ({
   // --- state ---
   gamePhase: 'splash',
@@ -57,27 +29,30 @@ const useGameStore = create((set, get) => ({
   currentTurn: 1,
 
   // Tournament structure
-  pools: {},              // { A: [ids], B: [ids], C: [ids] }
-  poolCount: 0,
-  tournamentPhase: 'groups', // 'groups' | 'knockout'
-  pendingMatches: [],     // matches yet to be played
-  completedMatches: [],   // finished matches
-  knockoutRounds: [],     // for bracket display: [{ round, matches: [...] }]
+  bracketStage: 'prelims', // 'prelims' | 'wildcards' | 'qf' | 'sf' | 'final'
+  pendingMatches: [],
+  completedMatches: [],
+  knockoutRounds: [],      // [{ round, matches }]
+
+  // Bachelor's 8 specifics
+  vipPlayerId: null,
+  wildcardCandidates: [],  // loser IDs from prelims
+  selectedWildcards: [],   // the 2 resurrected player IDs
 
   // Current battle
-  currentMatch: { player1: null, player2: null, p1Damage: 0, p2Damage: 0, activeQuestion: null },
+  currentMatch: { player1: null, player2: null, p1Damage: 0, p2Damage: 0, activeQuestion: null, isFinal: false },
   selectedMap: null,
+  matchWinner: null,
 
   // Audio
   isMusicPlaying: false,
   isMuted: false,
-  bgmState: 'paused', // 'playing' | 'faded' | 'paused'
-  currentTrack: 'theme', // 'theme' | 'regular_game' | 'final_game'
+  bgmState: 'paused',
+  currentTrack: 'theme',
   startMusic: () => set({ isMusicPlaying: true }),
   toggleMute: () => set((state) => ({ isMuted: !state.isMuted })),
   setBgmState: (newState, newTrack) => set((state) => ({ bgmState: newState, currentTrack: newTrack || state.currentTrack })),
-  playSFX: (sfxId) => { try { const audio = new Audio(`/assets/audio/${sfxId}.mp3`); audio.volume = 1.0; audio.play().catch(()=>{}); } catch(e){} },
-  matchWinner: null,
+  playSFX: (sfxId) => { try { const audio = new Audio(`/assets/audio/${sfxId}.mp3`); audio.volume = 1.0; audio.play().catch(() => {}); } catch (e) {} },
 
   // Tournament end
   tournamentWinner: null,
@@ -115,202 +90,163 @@ const useGameStore = create((set, get) => ({
     }),
 
   // ============================================
-  // DYNAMIC TOURNAMENT GENERATION
+  // BACHELOR'S 8 TOURNAMENT GENERATION
   // ============================================
   generateTournament: () =>
     set((state) => {
-      const size = state.tournamentSize;
-      const ids = shuffle(state.players.map((p) => p.id));
+      const { players } = state;
 
-      // --- Size 2: Direct final, no groups ---
-      if (size === 2) {
-        const players = state.players.map((p) => ({ ...p, pool: null }));
-        return {
-          players,
-          pools: {},
-          poolCount: 0,
-          tournamentPhase: 'knockout',
-          pendingMatches: [{ p1Id: ids[0], p2Id: ids[1], pool: null, round: 'Final', label: 'GRAND FINAL', isFinal: true }],
-          completedMatches: [],
-          knockoutRounds: [{ round: 'Final', matches: [{ p1Id: ids[0], p2Id: ids[1], completed: false, winnerId: null }] }],
-          isTournamentOver: false,
-          tournamentWinner: null,
-        };
-      }
+      // Find VIP (alexander) or pick random
+      const vipPlayer = players.find((p) => p.chosenCharacter === 'alexander');
+      const vipId = vipPlayer ? vipPlayer.id : shuffle(players.map((p) => p.id))[0];
 
-      // --- Determine pool count ---
-      let poolCount;
-      if (size <= 5) poolCount = 1;
-      else if (size <= 8) poolCount = 2;
-      else poolCount = 3;
+      // Remaining 10 fighters
+      const fighterIds = shuffle(players.filter((p) => p.id !== vipId).map((p) => p.id));
 
-      const pools = splitIntoPools(ids, poolCount);
-
-      // Tag players with pool
-      const players = state.players.map((p) => {
-        for (const [label, pIds] of Object.entries(pools)) {
-          if (pIds.includes(p.id)) return { ...p, pool: label, wins: 0, losses: 0, isEliminated: false };
-        }
-        return { ...p, wins: 0, losses: 0, isEliminated: false };
-      });
-
-      // Generate round-robin matches per pool, interleaved
-      const poolLabels = Object.keys(pools);
-      const poolMatches = {};
-      poolLabels.forEach((label) => {
-        poolMatches[label] = roundRobin(pools[label]).map((m) => ({ ...m, pool: label, round: 'Group', label: `Pool ${label}` }));
-      });
-
-      // Interleave matches across pools
-      const pending = [];
-      const maxLen = Math.max(...poolLabels.map((l) => poolMatches[l].length));
-      for (let i = 0; i < maxLen; i++) {
-        poolLabels.forEach((l) => {
-          if (i < poolMatches[l].length) pending.push(poolMatches[l][i]);
+      // Create 5 Prelim matches
+      const prelimMatches = [];
+      for (let i = 0; i < fighterIds.length; i += 2) {
+        prelimMatches.push({
+          p1Id: fighterIds[i],
+          p2Id: fighterIds[i + 1],
+          round: 'Prelims',
+          label: `Prelim ${Math.floor(i / 2) + 1}`,
+          isFinal: false,
+          completed: false,
+          winnerId: null,
         });
       }
 
       return {
-        players,
-        pools,
-        poolCount,
-        tournamentPhase: 'groups',
-        pendingMatches: pending,
+        vipPlayerId: vipId,
+        bracketStage: 'prelims',
+        pendingMatches: [...prelimMatches],
         completedMatches: [],
-        knockoutRounds: [],
+        knockoutRounds: [{ round: 'Prelims', matches: prelimMatches.map((m) => ({ ...m })) }],
+        wildcardCandidates: [],
+        selectedWildcards: [],
         isTournamentOver: false,
         tournamentWinner: null,
+        players: players.map((p) => ({ ...p, wins: 0, losses: 0, isEliminated: false })),
       };
     }),
 
   // ============================================
-  // KNOCKOUT BRACKET GENERATION
+  // ADVANCE TOURNAMENT (called after all pending matches complete)
   // ============================================
-  generateKnockoutBracket: () =>
+  advanceTournament: () =>
     set((state) => {
-      const { pools, poolCount, players } = state;
+      const { bracketStage, knockoutRounds, players } = state;
 
-      if (poolCount === 0) return {}; // size 2, already in knockout
-
-      const poolLabels = Object.keys(pools);
-      let qualifierIds = [];
-      let knockoutMatches = [];
-
-      if (poolCount === 1) {
-        // Top 2 from Pool A → Grand Final
-        const standings = getPoolStandings(pools.A, players);
-        qualifierIds = standings.slice(0, 2).map((p) => p.id);
-        knockoutMatches = [
-          { p1Id: qualifierIds[0], p2Id: qualifierIds[1], round: 'Final', label: 'GRAND FINAL', isFinal: true, completed: false, winnerId: null },
-        ];
-      } else if (poolCount === 2) {
-        // Top 2 from each pool → Semi-Finals: A1 vs B2, B1 vs A2
-        const standA = getPoolStandings(pools.A, players);
-        const standB = getPoolStandings(pools.B, players);
-        const a1 = standA[0], a2 = standA[1], b1 = standB[0], b2 = standB[1];
-        qualifierIds = [a1, a2, b1, b2].map((p) => p.id);
-        knockoutMatches = [
-          { p1Id: a1.id, p2Id: b2.id, round: 'SF', label: 'Semi Final 1', completed: false, winnerId: null },
-          { p1Id: b1.id, p2Id: a2.id, round: 'SF', label: 'Semi Final 2', completed: false, winnerId: null },
-        ];
-      } else {
-        // 3 pools: 3 pool winners + best runner-up → Semi-Finals
-        const standings = poolLabels.map((l) => getPoolStandings(pools[l], players));
-        const winners = standings.map((s) => s[0]); // 3 pool winners
-        const runnersUp = standings
-          .map((s) => s[1])
-          .filter(Boolean)
-          .sort((a, b) => b.wins - a.wins || a.losses - b.losses);
-        const bestRunnerUp = runnersUp[0];
-
-        const semiFighters = [...winners];
-        if (bestRunnerUp) semiFighters.push(bestRunnerUp);
-
-        qualifierIds = semiFighters.map((p) => p.id);
-
-        if (semiFighters.length === 4) {
-          // Seed: Pool A winner vs best runner-up, Pool B winner vs Pool C winner
-          knockoutMatches = [
-            { p1Id: semiFighters[0].id, p2Id: semiFighters[3].id, round: 'SF', label: 'Semi Final 1', completed: false, winnerId: null },
-            { p1Id: semiFighters[1].id, p2Id: semiFighters[2].id, round: 'SF', label: 'Semi Final 2', completed: false, winnerId: null },
-          ];
-        } else if (semiFighters.length === 3) {
-          // 3 fighters: #1 seed gets bye, #2 vs #3
-          knockoutMatches = [
-            { p1Id: semiFighters[1].id, p2Id: semiFighters[2].id, round: 'SF', label: 'Semi Final', completed: false, winnerId: null },
-          ];
-          // Store bye player
-          set({ _byePlayerId: semiFighters[0].id });
-        } else {
-          // 2 fighters: direct final
-          knockoutMatches = [
-            { p1Id: semiFighters[0].id, p2Id: semiFighters[1].id, round: 'Final', label: 'GRAND FINAL', isFinal: true, completed: false, winnerId: null },
-          ];
-        }
-      }
-
-      // Mark non-qualifiers as eliminated
-      const updatedPlayers = players.map((p) => ({
-        ...p,
-        isEliminated: !qualifierIds.includes(p.id),
-      }));
-
-      return {
-        players: updatedPlayers,
-        tournamentPhase: 'knockout',
-        pendingMatches: knockoutMatches,
-        knockoutRounds: [{ round: knockoutMatches[0]?.round || 'Final', matches: knockoutMatches.map((m) => ({ ...m })) }],
-        gamePhase: 'tournament_overview',
-      };
-    }),
-
-  // ============================================
-  // ADVANCE KNOCKOUT (generate next round)
-  // ============================================
-  advanceKnockout: () =>
-    set((state) => {
-      const { completedMatches, knockoutRounds, _byePlayerId, players } = state;
-
-      // Find winners from the latest round
+      // Get latest round results
       const lastRound = knockoutRounds[knockoutRounds.length - 1];
       if (!lastRound) return {};
 
-      const roundWinnerIds = lastRound.matches
-        .filter((m) => m.completed)
-        .map((m) => m.winnerId);
+      const completedInRound = lastRound.matches.filter((m) => m.completed);
+      const winnerIds = completedInRound.map((m) => m.winnerId);
+      const loserIds = completedInRound.map((m) => m.winnerId === m.p1Id ? m.p2Id : m.p1Id);
 
-      if (lastRound.round === 'Final') {
-        // Tournament over
-        const winner = players.find((p) => p.id === roundWinnerIds[0]);
-        return { isTournamentOver: true, tournamentWinner: winner };
+      if (bracketStage === 'prelims') {
+        // Move losers to wildcard candidates — do NOT eliminate yet
+        return {
+          bracketStage: 'wildcards',
+          wildcardCandidates: loserIds,
+          pendingMatches: [],
+        };
       }
 
-      // Generate next round
-      let nextMatches = [];
-      let nextRound = 'Final';
-
-      if (lastRound.round === 'SF') {
-        if (roundWinnerIds.length === 2) {
-          nextMatches = [
-            { p1Id: roundWinnerIds[0], p2Id: roundWinnerIds[1], round: 'Final', label: 'GRAND FINAL', isFinal: true, completed: false, winnerId: null },
-          ];
-        } else if (roundWinnerIds.length === 1 && _byePlayerId) {
-          nextMatches = [
-            { p1Id: roundWinnerIds[0], p2Id: _byePlayerId, round: 'Final', label: 'GRAND FINAL', isFinal: true, completed: false, winnerId: null },
-          ];
-        }
+      if (bracketStage === 'qf') {
+        // Eliminate QF losers, generate 2 SF matches
+        const updatedPlayers = players.map((p) =>
+          loserIds.includes(p.id) ? { ...p, isEliminated: true } : p
+        );
+        const shuffledWinners = shuffle(winnerIds);
+        const sfMatches = [
+          { p1Id: shuffledWinners[0], p2Id: shuffledWinners[1], round: 'SF', label: 'Semi Final 1', isFinal: false, completed: false, winnerId: null },
+          { p1Id: shuffledWinners[2], p2Id: shuffledWinners[3], round: 'SF', label: 'Semi Final 2', isFinal: false, completed: false, winnerId: null },
+        ];
+        return {
+          players: updatedPlayers,
+          bracketStage: 'sf',
+          pendingMatches: [...sfMatches],
+          knockoutRounds: [...knockoutRounds, { round: 'SF', matches: sfMatches.map((m) => ({ ...m })) }],
+          gamePhase: 'tournament_overview',
+        };
       }
 
-      // Eliminate losers
-      const loserIds = lastRound.matches
-        .filter((m) => m.completed)
-        .map((m) => m.winnerId === m.p1Id ? m.p2Id : m.p1Id);
-      const updatedPlayers = players.map((p) => loserIds.includes(p.id) ? { ...p, isEliminated: true } : p);
+      if (bracketStage === 'sf') {
+        // Eliminate SF losers, generate Final
+        const updatedPlayers = players.map((p) =>
+          loserIds.includes(p.id) ? { ...p, isEliminated: true } : p
+        );
+        const finalMatch = {
+          p1Id: winnerIds[0], p2Id: winnerIds[1], round: 'Final', label: 'GRAND FINAL', isFinal: true, completed: false, winnerId: null,
+        };
+        return {
+          players: updatedPlayers,
+          bracketStage: 'final',
+          pendingMatches: [{ ...finalMatch }],
+          knockoutRounds: [...knockoutRounds, { round: 'Final', matches: [{ ...finalMatch }] }],
+          gamePhase: 'tournament_overview',
+        };
+      }
+
+      if (bracketStage === 'final') {
+        const winner = players.find((p) => p.id === winnerIds[0]);
+        return {
+          isTournamentOver: true,
+          tournamentWinner: winner,
+        };
+      }
+
+      return {};
+    }),
+
+  // ============================================
+  // WILDCARD ROULETTE
+  // ============================================
+  executeWildcards: () =>
+    set((state) => {
+      const { wildcardCandidates, vipPlayerId, players, knockoutRounds } = state;
+
+      // Pick 2 random wildcards from the 5 prelim losers
+      const shuffled = shuffle([...wildcardCandidates]);
+      const selected = shuffled.slice(0, 2);
+      const eliminated = shuffled.slice(2);
+
+      // Eliminate the 3 who didn't make it
+      const updatedPlayers = players.map((p) =>
+        eliminated.includes(p.id) ? { ...p, isEliminated: true } : p
+      );
+
+      // 8 players: 5 prelim winners + 1 VIP + 2 wildcards
+      const prelimWinnerIds = knockoutRounds
+        .find((r) => r.round === 'Prelims')
+        ?.matches.filter((m) => m.completed)
+        .map((m) => m.winnerId) || [];
+
+      const qfPlayerIds = shuffle([...prelimWinnerIds, vipPlayerId, ...selected]);
+
+      // Generate 4 QF matches
+      const qfMatches = [];
+      for (let i = 0; i < qfPlayerIds.length; i += 2) {
+        qfMatches.push({
+          p1Id: qfPlayerIds[i],
+          p2Id: qfPlayerIds[i + 1],
+          round: 'QF',
+          label: `Quarter Final ${Math.floor(i / 2) + 1}`,
+          isFinal: false,
+          completed: false,
+          winnerId: null,
+        });
+      }
 
       return {
         players: updatedPlayers,
-        pendingMatches: nextMatches,
-        knockoutRounds: [...knockoutRounds, { round: nextRound, matches: nextMatches.map((m) => ({ ...m })) }],
+        selectedWildcards: selected,
+        bracketStage: 'qf',
+        pendingMatches: [...qfMatches],
+        knockoutRounds: [...knockoutRounds, { round: 'QF', matches: qfMatches.map((m) => ({ ...m })) }],
         gamePhase: 'tournament_overview',
       };
     }),
@@ -423,18 +359,18 @@ const useGameStore = create((set, get) => ({
       gamePhase: 'splash',
       players: createPlayers(state.tournamentSize),
       currentTurn: 1,
-      pools: {},
-      poolCount: 0,
-      tournamentPhase: 'groups',
+      bracketStage: 'prelims',
       pendingMatches: [],
       completedMatches: [],
       knockoutRounds: [],
-      currentMatch: { player1: null, player2: null, p1Damage: 0, p2Damage: 0, activeQuestion: null },
+      vipPlayerId: null,
+      wildcardCandidates: [],
+      selectedWildcards: [],
+      currentMatch: { player1: null, player2: null, p1Damage: 0, p2Damage: 0, activeQuestion: null, isFinal: false },
       selectedMap: null,
       matchWinner: null,
       tournamentWinner: null,
       isTournamentOver: false,
-      _byePlayerId: null,
       bgmState: 'paused',
       currentTrack: 'theme',
     })),
