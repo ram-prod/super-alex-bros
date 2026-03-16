@@ -83,6 +83,18 @@ function App() {
     if (audioRef.current) audioRef.current.currentTime = 0;
   }, [audioResetTick]);
 
+  // Global button click SFX
+  useEffect(() => {
+    const handler = (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const sfx = btn.dataset.sound === 'special' ? 'click_special' : 'click';
+      useGameStore.getState().playSFX(sfx);
+    };
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, []);
+
   // Mute toggle
   useEffect(() => {
     if (audioRef.current) audioRef.current.muted = isMuted;
