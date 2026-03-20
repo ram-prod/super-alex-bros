@@ -6,14 +6,25 @@ const FIGHTER_EMOJI = {
   frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
 };
 
+/*
+ * Diagonal split angle: clip-path goes from 58% (top) to 42% (bottom).
+ * That's a 16% horizontal shift over 100% vertical = atan(16/100) ≈ 9.09°.
+ * We use the same skewX for the energy slash so they align perfectly.
+ */
+const SLASH_SKEW = 'skewX(9.1deg)';
+
 function FighterPanel({ player, side, characters }) {
   const charId = player?.chosenCharacter;
   const charData = characters.find((c) => c.id === charId);
   const isLeft = side === 'left';
   const hasBody = !!charData?.body;
 
+  // Show character name subtitle only if different from player name
+  const charName = charData?.name || '???';
+  const showCharSubtitle = charName.toLowerCase() !== (player?.name || '').toLowerCase();
+
   return (
-    <div className={`relative flex flex-col items-center justify-end h-full ${isLeft ? 'pr-8 sm:pr-12' : 'pl-8 sm:pl-12'}`}>
+    <div className={`relative flex flex-col items-center justify-end h-full ${isLeft ? 'pr-4 sm:pr-8' : 'pl-4 sm:pl-8'}`}>
       {/* Character image or emoji fallback */}
       <motion.div
         className="relative z-10 flex-1 flex items-end justify-center min-h-0"
@@ -22,17 +33,21 @@ function FighterPanel({ player, side, characters }) {
         transition={{ type: 'tween', ease: 'easeOut', duration: 0.5, delay: 0.1 }}
       >
         {hasBody ? (
-          <motion.img
-            src={`/assets/characters/${charData.body}`}
-            alt={player?.name}
-            className="max-h-[65vh] w-auto object-contain drop-shadow-[0_0_30px_rgba(0,0,0,0.9)]"
-            style={{
-              transform: isLeft ? 'none' : 'scaleX(-1)',
-              filter: `drop-shadow(0 0 20px ${isLeft ? 'rgba(239,68,68,0.4)' : 'rgba(59,130,246,0.4)'})`,
-            }}
+          <motion.div
+            className="max-h-[65vh] flex items-end justify-center"
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          />
+          >
+            <img
+              src={`/assets/characters/${charData.body}`}
+              alt={player?.name}
+              className="max-h-[65vh] w-auto object-contain"
+              style={{
+                transform: isLeft ? 'none' : 'scaleX(-1)',
+                filter: `drop-shadow(0 0 30px rgba(0,0,0,0.9)) drop-shadow(0 0 20px ${isLeft ? 'rgba(239,68,68,0.4)' : 'rgba(59,130,246,0.4)'})`,
+              }}
+            />
+          </motion.div>
         ) : (
           /* Silhouette placeholder with emoji */
           <motion.div
@@ -80,13 +95,15 @@ function FighterPanel({ player, side, characters }) {
             {player?.name}
           </div>
         </div>
-        <div
-          className={`text-xs sm:text-sm font-bold uppercase tracking-[0.3em] mt-1 ${
-            isLeft ? 'text-red-400/70' : 'text-blue-400/70'
-          }`}
-        >
-          {charData?.name || '???'}
-        </div>
+        {showCharSubtitle && (
+          <div
+            className={`text-xs sm:text-sm font-bold uppercase tracking-[0.3em] mt-1 ${
+              isLeft ? 'text-red-400/70' : 'text-blue-400/70'
+            }`}
+          >
+            as {charName}
+          </div>
+        )}
       </motion.div>
     </div>
   );
@@ -110,33 +127,37 @@ export default function VsScreenView() {
         style={{ clipPath: 'polygon(58% 0, 100% 0, 100% 100%, 42% 100%)' }}
       />
 
-      {/* Diagonal energy slash */}
+      {/* Diagonal energy slash — exact same angle as clip-path split */}
       <motion.div
-        className="absolute inset-0 pointer-events-none z-20"
+        className="absolute inset-0 pointer-events-none z-20 flex items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.3 }}
       >
-        {/* Main slash glow */}
+        {/* Wide outer glow */}
         <div
-          className="absolute top-0 h-full"
+          className="absolute h-[120%] w-[6px] sm:w-[8px]"
           style={{
-            left: '42%',
-            width: '16%',
-            background: 'linear-gradient(to right, transparent, rgba(250,204,21,0.08) 30%, rgba(255,255,255,0.15) 48%, rgba(255,255,255,0.15) 52%, rgba(250,204,21,0.08) 70%, transparent)',
-            clipPath: 'polygon(38% 0, 62% 0, 38% 100%, 12% 100%)',
+            transform: SLASH_SKEW,
+            background: 'linear-gradient(180deg, rgba(250,204,21,0.1), rgba(255,255,255,0.3) 30%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.3) 70%, rgba(250,204,21,0.1))',
+            filter: 'blur(12px)',
+          }}
+        />
+        {/* Medium glow */}
+        <div
+          className="absolute h-[120%] w-[4px]"
+          style={{
+            transform: SLASH_SKEW,
+            background: 'linear-gradient(180deg, rgba(250,204,21,0.3), rgba(255,255,255,0.7) 30%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0.7) 70%, rgba(250,204,21,0.3))',
+            filter: 'blur(4px)',
           }}
         />
         {/* Sharp center line */}
         <div
-          className="absolute top-0 h-full"
+          className="absolute h-[120%] w-[2px]"
           style={{
-            left: '49%',
-            width: '2%',
-            background: 'linear-gradient(180deg, rgba(250,204,21,0.6), rgba(255,255,255,0.9) 30%, rgba(255,255,255,0.9) 70%, rgba(250,204,21,0.6))',
-            clipPath: 'polygon(100% 0, 100% 0, 0% 100%, 0% 100%)',
-            filter: 'blur(1px)',
-            transform: 'translateX(-50%) skewX(-10deg)',
+            transform: SLASH_SKEW,
+            background: 'linear-gradient(180deg, rgba(250,204,21,0.6), rgba(255,255,255,1) 20%, rgba(255,255,255,1) 80%, rgba(250,204,21,0.6))',
           }}
         />
       </motion.div>
