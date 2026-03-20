@@ -42,12 +42,32 @@ export default function WheelOfFortune({ onClose }) {
   const [phase, setPhase] = useState('idle'); // idle | spinning | reveal
   const [rotation, setRotation] = useState(0);
   const [winner, setWinner] = useState(null);
+  const [extraCharIds, setExtraCharIds] = useState([]); // character IDs not in tournament, toggled on
 
   const rotationRef = useRef(0);
   const rafRef = useRef(null);
 
-  const count = players.length;
+  // Characters NOT in the tournament — available to add as guests
+  const tournamentCharIds = players.map((p) => p.chosenCharacter);
+  const availableExtras = characters.filter((c) => !tournamentCharIds.includes(c.id));
+
+  // Build wheel players: tournament players + guest entries for extras
+  const guestPlayers = extraCharIds.map((charId, idx) => ({
+    id: `guest-${idx}`,
+    name: characters.find((c) => c.id === charId)?.name || charId,
+    chosenCharacter: charId,
+  }));
+  const wheelPlayers = [...players, ...guestPlayers];
+
+  const count = wheelPlayers.length;
   const segmentAngle = 360 / count;
+
+  const toggleExtra = (charId) => {
+    if (phase !== 'idle') return;
+    setExtraCharIds((prev) =>
+      prev.includes(charId) ? prev.filter((id) => id !== charId) : [...prev, charId]
+    );
+  };
 
   // Wheel sizing — large enough to see faces clearly on TV
   const size = 420;
@@ -63,7 +83,7 @@ export default function WheelOfFortune({ onClose }) {
 
     // Pick random winner
     const winnerIdx = Math.floor(Math.random() * count);
-    setWinner(players[winnerIdx]);
+    setWinner(wheelPlayers[winnerIdx]);
 
     // Calculate target: the winner segment's center should align with the needle (top = 0°)
     // Segment i spans from i*segmentAngle to (i+1)*segmentAngle
@@ -104,7 +124,7 @@ export default function WheelOfFortune({ onClose }) {
     };
 
     rafRef.current = requestAnimationFrame(animate);
-  }, [phase, count, players, segmentAngle]);
+  }, [phase, count, wheelPlayers, segmentAngle]);
 
   useEffect(() => {
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
@@ -180,7 +200,7 @@ export default function WheelOfFortune({ onClose }) {
                 >
                   <defs>
                     {/* Circular clip paths for portraits */}
-                    {players.map((_, i) => {
+                    {wheelPlayers.map((_, i) => {
                       const midAngle = i * segmentAngle + segmentAngle / 2;
                       const pos = polarToCartesian(cx, cy, radius * 0.72, midAngle);
                       return (
@@ -191,7 +211,7 @@ export default function WheelOfFortune({ onClose }) {
                     })}
                   </defs>
 
-                  {players.map((player, i) => {
+                  {wheelPlayers.map((player, i) => {
                     const startAngle = i * segmentAngle;
                     const endAngle = (i + 1) * segmentAngle;
                     const midAngle = startAngle + segmentAngle / 2;
@@ -219,40 +239,42 @@ export default function WheelOfFortune({ onClose }) {
                           stroke="none"
                         />
 
-                        {/* Portrait image or emoji — no names, just faces */}
-                        {charData?.portrait ? (
-                          <>
-                            <image
-                              href={`/assets/characters/${charData.portrait}`}
-                              x={labelPos.x - 28}
-                              y={labelPos.y - 28}
-                              width="56"
-                              height="56"
-                              clipPath={`url(#portrait-clip-${i})`}
-                              preserveAspectRatio="xMidYMid slice"
-                            />
-                            {/* Subtle border ring around portrait */}
-                            <circle
-                              cx={labelPos.x}
-                              cy={labelPos.y}
-                              r={28}
-                              fill="none"
-                              stroke={color}
-                              strokeWidth="2"
-                              opacity="0.7"
-                            />
-                          </>
-                        ) : (
-                          <text
-                            x={labelPos.x}
-                            y={labelPos.y}
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            fontSize="28"
-                          >
-                            {FIGHTER_EMOJI[player.chosenCharacter] || '❓'}
-                          </text>
-                        )}
+                        {/* Portrait/emoji — counter-rotated to always stay upright */}
+                        <g transform={`rotate(${-rotation}, ${labelPos.x}, ${labelPos.y})`}>
+                          {charData?.portrait ? (
+                            <>
+                              <image
+                                href={`/assets/characters/${charData.portrait}`}
+                                x={labelPos.x - 28}
+                                y={labelPos.y - 28}
+                                width="56"
+                                height="56"
+                                clipPath={`url(#portrait-clip-${i})`}
+                                preserveAspectRatio="xMidYMid slice"
+                              />
+                              {/* Subtle border ring around portrait */}
+                              <circle
+                                cx={labelPos.x}
+                                cy={labelPos.y}
+                                r={28}
+                                fill="none"
+                                stroke={color}
+                                strokeWidth="2"
+                                opacity="0.7"
+                              />
+                            </>
+                          ) : (
+                            <text
+                              x={labelPos.x}
+                              y={labelPos.y}
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              fontSize="28"
+                            >
+                              {FIGHTER_EMOJI[player.chosenCharacter] || '❓'}
+                            </text>
+                          )}
+                        </g>
                       </g>
                     );
                   })}
@@ -281,6 +303,55 @@ export default function WheelOfFortune({ onClose }) {
                   />
                 </div>
               </div>
+
+              {/* Add guest players — only when idle and extras are available */}
+              {phase === 'idle' && availableExtras.length > 0 && (
+                <div className="mb-6 w-full max-w-sm">
+                  <p className="text-xs text-gray-500 uppercase tracking-widest text-center mb-2 font-mono">
+                    Add guests to the wheel
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {availableExtras.map((char) => {
+                      const isAdded = extraCharIds.includes(char.id);
+                      const color = FIGHTER_COLORS[char.id] || '#666';
+                      return (
+                        <button
+                          key={char.id}
+                          onClick={() => toggleExtra(char.id)}
+                          className={`relative rounded-full overflow-hidden border-2 transition-all duration-200 ${
+                            isAdded
+                              ? 'scale-105 shadow-lg'
+                              : 'opacity-50 grayscale hover:opacity-80 hover:grayscale-0'
+                          }`}
+                          style={{
+                            width: 44,
+                            height: 44,
+                            borderColor: isAdded ? color : '#555',
+                            boxShadow: isAdded ? `0 0 15px ${color}60` : 'none',
+                          }}
+                        >
+                          {char.portrait ? (
+                            <img
+                              src={`/assets/characters/${char.portrait}`}
+                              alt={char.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="flex items-center justify-center w-full h-full bg-gray-800 text-lg">
+                              {FIGHTER_EMOJI[char.id] || '❓'}
+                            </span>
+                          )}
+                          {isAdded && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                              <span className="text-white text-xs font-bold">✓</span>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Spin button */}
               {phase === 'idle' && (
