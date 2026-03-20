@@ -11,10 +11,9 @@ const FIGHTER_EMOJI = {
 
 const ROUND_HEADERS = { Prelims: '🥊 PRELIMS', QF: '⚔️ QUARTER-FINALS', SF: '🔥 SEMI-FINALS', Final: '👑 GRAND FINAL' };
 
-// --- Compact player row ---
+// --- Player slot in a match card ---
 function PlayerSlot({ player, placeholder, isWinner, isVip, isWildcard }) {
   if (!player) {
-    // Show placeholder label or TBD
     const label = placeholder
       ? placeholder.startsWith('W_') ? `Winner ${placeholder.split('_')[1]} ${parseInt(placeholder.split('_')[2]) + 1}`
       : placeholder.startsWith('WC_') ? `🃏 Wildcard ${+placeholder.split('_')[1] + 1}`
@@ -22,22 +21,22 @@ function PlayerSlot({ player, placeholder, isWinner, isVip, isWildcard }) {
       : 'TBD'
       : 'TBD';
     return (
-      <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-gray-800/30 border border-dashed border-gray-700/30">
-        <span className="text-[10px] text-gray-500 italic truncate">{label}</span>
+      <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-gray-800/30 border border-dashed border-gray-700/30">
+        <span className="text-xs sm:text-sm text-gray-500 italic truncate">{label}</span>
       </div>
     );
   }
   const charId = player.chosenCharacter;
 
   return (
-    <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-sm font-bold transition-all ${
-      isWinner ? 'bg-green-500/15 text-green-300' : player.isEliminated ? 'bg-red-500/5 text-red-400/50 line-through' : 'bg-white/5 text-white'
+    <div className={`flex items-center gap-2.5 px-3 py-2 rounded-md font-bold transition-all ${
+      isWinner ? 'bg-green-500/15 text-green-300 border border-green-500/30' : player.isEliminated ? 'bg-red-500/5 text-red-400/50 line-through border border-red-500/10' : 'bg-white/5 text-white border border-white/10'
     }`}>
-      <CharacterThumb charId={charId} size="w-6 h-6" emojiSize="text-base" />
-      <span className="truncate">{player.name}</span>
-      {isVip && <span className="text-[9px] text-yellow-400">👑</span>}
-      {isWildcard && <span className="text-[9px] text-purple-400">🃏</span>}
-      {isWinner && <span className="ml-auto text-green-400 text-[9px]">✓</span>}
+      <CharacterThumb charId={charId} size="w-10 h-10" emojiSize="text-2xl" />
+      <span className="text-base sm:text-lg truncate">{player.name}</span>
+      {isVip && <span className="text-xs text-yellow-400 ml-auto">👑</span>}
+      {isWildcard && <span className="text-xs text-purple-400 ml-auto">🃏</span>}
+      {isWinner && <span className="ml-auto text-green-400 text-sm">✓</span>}
     </div>
   );
 }
@@ -54,16 +53,16 @@ function MatchCard({ match, players, vipPlayerId, selectedWildcards, isActive, a
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: animDelay, duration: 0.3, type: 'tween', ease: 'easeOut' }}
     >
-      <div className={`rounded-lg border p-1.5 space-y-0.5 min-w-0 transition-all ${
+      <div className={`rounded-lg border p-2 space-y-1 min-w-0 transition-all ${
         isActive && !match.completed
-          ? 'border-yellow-500/40 bg-yellow-500/5 shadow-[0_0_12px_rgba(250,204,21,0.1)]'
+          ? 'border-yellow-500/40 bg-yellow-500/5 shadow-[0_0_15px_rgba(250,204,21,0.15)]'
           : match.completed
           ? 'border-green-500/20 bg-gray-900/40'
           : 'border-gray-700/30 bg-gray-900/40'
       }`}>
         <PlayerSlot player={p1} placeholder={p1Placeholder} isWinner={match.completed && match.winnerId === p1?.id}
           isVip={p1?.id === vipPlayerId} isWildcard={selectedWildcards?.includes(p1?.id)} />
-        <div className="text-center text-[8px] text-gray-600 font-bold">VS</div>
+        <div className="text-center text-xs text-gray-600 font-black tracking-widest py-0.5">VS</div>
         <PlayerSlot player={p2} placeholder={p2Placeholder} isWinner={match.completed && match.winnerId === p2?.id}
           isVip={p2?.id === vipPlayerId} isWildcard={selectedWildcards?.includes(p2?.id)} />
       </div>
@@ -74,10 +73,18 @@ function MatchCard({ match, players, vipPlayerId, selectedWildcards, isActive, a
 function VipBadge({ player }) {
   if (!player) return null;
   return (
-    <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-1.5 text-center flex flex-col items-center">
-      <div className="my-0.5"><CharacterThumb charId={player.chosenCharacter} size="w-7 h-7" emojiSize="text-lg" /></div>
-      <div className="text-[10px] font-bold text-yellow-300 truncate">{player.name}</div>
-      <div className="text-[8px] text-yellow-500/50 font-mono">VIP BYE</div>
+    <div className="relative flex flex-col items-center">
+      {/* Crown centered above the card */}
+      <div className="text-2xl sm:text-3xl mb-1 drop-shadow-lg" style={{ filter: 'drop-shadow(0 0 8px rgba(250,204,21,0.6))' }}>👑</div>
+      {/* Card — same layout as PlayerSlot but with VIP gold styling */}
+      <div className="flex items-center gap-2.5 px-3 py-2 rounded-md border-2 border-yellow-500/50 bg-yellow-500/10 font-bold text-yellow-300"
+        style={{ boxShadow: '0 0 20px rgba(250,204,21,0.15)' }}>
+        <CharacterThumb charId={player.chosenCharacter} size="w-10 h-10" emojiSize="text-2xl" />
+        <div className="flex flex-col">
+          <span className="text-base sm:text-lg">{player.name}</span>
+          <span className="text-[10px] sm:text-xs text-yellow-500/60 font-mono uppercase tracking-wider">VIP Bye</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -217,14 +224,12 @@ export default function TournamentBracketView() {
   const [showRoulette, setShowRoulette] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
 
-  // Generate tournament on first mount
   useEffect(() => {
     if (knockoutRounds.length === 0 && !isTournamentOver) {
       generateTournament();
     }
   }, []);
 
-  // Auto-advance: check the ACTIVE round
   useEffect(() => {
     if (bracketStage === 'wildcards') return;
     const stageToRound = { prelims: 'Prelims', qf: 'QF', sf: 'SF', final: 'Final' };
@@ -243,7 +248,6 @@ export default function TournamentBracketView() {
   const stageToRound = { prelims: 'Prelims', qf: 'QF', sf: 'SF', final: 'Final' };
   const activeRoundName = stageToRound[bracketStage];
 
-  // Handle proceed — Final goes to villa directly
   const handleProceed = () => {
     if (nextMatch?.isFinal) {
       useGameStore.setState({
@@ -334,75 +338,72 @@ export default function TournamentBracketView() {
         <WildcardRoulette candidates={wildcardCandidates} players={players} onComplete={executeWildcards} />
       )}
 
-      {/* Bracket grid — single screen, centered */}
-      {(
-        <div className="relative z-10 flex-1 flex items-center justify-center px-2 sm:px-4 pb-24 overflow-hidden">
-          <div className="flex items-center justify-center h-full w-full max-w-6xl mx-auto">
-            {knockoutRounds.map((round, roundIdx) => {
-              const nextRound = knockoutRounds[roundIdx + 1];
-              const isActiveRound = round.round === activeRoundName;
+      {/* Bracket grid */}
+      <div className="relative z-10 flex-1 flex items-center justify-center px-2 sm:px-4 pb-24 overflow-hidden">
+        <div className="flex items-center justify-center h-full w-full max-w-7xl mx-auto gap-1 sm:gap-2">
+          {knockoutRounds.map((round, roundIdx) => {
+            const nextRound = knockoutRounds[roundIdx + 1];
+            const isActiveRound = round.round === activeRoundName;
 
-              return (
-                <div key={roundIdx} className="contents">
-                  {/* Round column */}
-                  <div className="flex flex-col flex-1 min-w-0 max-w-[280px] sm:max-w-[320px]">
-                    {/* Round label */}
-                    <div className={`text-center mb-2 ${isActiveRound ? 'text-yellow-400' : 'text-gray-500'}`}>
-                      <div className="text-xs sm:text-sm font-black uppercase tracking-widest drop-shadow-sm">
-                        {ROUND_HEADERS[round.round] || round.round}
-                      </div>
-                      <div className="text-[10px] font-mono text-gray-600">
-                        {round.matches.filter((m) => m.completed).length}/{round.matches.length}
-                      </div>
+            return (
+              <div key={roundIdx} className="contents">
+                {/* Round column */}
+                <div className="flex flex-col flex-1 min-w-0">
+                  {/* Round label */}
+                  <div className={`text-center mb-2 ${isActiveRound ? 'text-yellow-400' : 'text-gray-500'}`}>
+                    <div className="text-sm sm:text-base font-black uppercase tracking-widest drop-shadow-sm">
+                      {ROUND_HEADERS[round.round] || round.round}
                     </div>
-
-                    {/* VIP badges in prelims column */}
-                    {round.round === 'Prelims' && vipPlayer && (
-                      <div className="flex gap-1 justify-center mb-2">
-                        <VipBadge player={vipPlayer} />
-                      </div>
-                    )}
-
-                    {/* Matches — spread vertically */}
-                    <div className="flex flex-col justify-around flex-1 gap-1">
-                      {round.matches.map((match, mIdx) => (
-                        <MatchCard
-                          key={mIdx}
-                          match={match}
-                          players={players}
-                          vipPlayerId={vipPlayerId}
-                          selectedWildcards={selectedWildcards}
-                          isActive={isActiveRound}
-                          animDelay={0.1 + (roundIdx * 0.15) + (mIdx * 0.05)}
-                        />
-                      ))}
+                    <div className="text-xs font-mono text-gray-600">
+                      {round.matches.filter((m) => m.completed).length}/{round.matches.length}
                     </div>
                   </div>
 
-                  {/* Arrow separator */}
-                  {nextRound && (
-                    <motion.div className="flex items-center justify-center px-2 sm:px-4"
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.1 + (roundIdx * 0.15), duration: 0.5, type: 'tween', ease: 'easeOut' }}>
-                      <motion.span
-                        className="text-4xl sm:text-5xl text-yellow-500/40"
-                        animate={{ opacity: [0.3, 0.7, 0.3] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        ➔
-                      </motion.span>
-                    </motion.div>
+                  {/* VIP badge in prelims column */}
+                  {round.round === 'Prelims' && vipPlayer && (
+                    <div className="flex justify-center mb-2">
+                      <VipBadge player={vipPlayer} />
+                    </div>
                   )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
-      {/* Bottom action bar */}
-      {/* Wildcard draw button */}
+                  {/* Matches */}
+                  <div className="flex flex-col justify-around flex-1 gap-1.5">
+                    {round.matches.map((match, mIdx) => (
+                      <MatchCard
+                        key={mIdx}
+                        match={match}
+                        players={players}
+                        vipPlayerId={vipPlayerId}
+                        selectedWildcards={selectedWildcards}
+                        isActive={isActiveRound}
+                        animDelay={0.1 + (roundIdx * 0.15) + (mIdx * 0.05)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Arrow separator */}
+                {nextRound && (
+                  <motion.div className="flex items-center justify-center px-1 sm:px-3"
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 + (roundIdx * 0.15), duration: 0.5, type: 'tween', ease: 'easeOut' }}>
+                    <motion.span
+                      className="text-4xl sm:text-6xl text-yellow-500/40"
+                      animate={{ opacity: [0.3, 0.7, 0.3] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      ➔
+                    </motion.span>
+                  </motion.div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Bottom action bar — Wildcard draw */}
       {bracketStage === 'wildcards' && !showRoulette && (
         <motion.div className="fixed bottom-0 left-0 right-0 z-30"
           initial={{ y: 80 }} animate={{ y: 0 }} transition={{ type: 'tween', ease: 'easeOut', duration: 0.4 }}>
@@ -429,18 +430,23 @@ export default function TournamentBracketView() {
         </motion.div>
       )}
 
-      {/* Normal proceed button */}
+      {/* Bottom action bar — Proceed to next match */}
       {bracketStage !== 'wildcards' && nextMatch && (
         <motion.div className="fixed bottom-0 left-0 right-0 z-30"
           initial={{ y: 80 }} animate={{ y: 0 }} transition={{ type: 'tween', ease: 'easeOut', duration: 0.4 }}>
           <div className="bg-gradient-to-t from-black via-black/95 to-transparent pt-6 pb-4 px-4">
-            <div className="max-w-md mx-auto">
-              <div className="flex items-center justify-center gap-3 mb-3">
-                <CharacterThumb charId={nextP1?.chosenCharacter} size="w-10 h-10" emojiSize="text-4xl" />
-                <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-md">{nextP1?.name}</span>
-                <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-400 to-red-500 mx-2" style={{ WebkitTextStroke: '1px rgba(255,255,255,0.2)' }}>VS</span>
-                <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-md">{nextP2?.name}</span>
-                <CharacterThumb charId={nextP2?.chosenCharacter} size="w-10 h-10" emojiSize="text-4xl" />
+            <div className="max-w-lg mx-auto">
+              {/* Next match preview */}
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <CharacterThumb charId={nextP1?.chosenCharacter} size="w-14 h-14" emojiSize="text-4xl" />
+                  <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-md">{nextP1?.name}</span>
+                </div>
+                <span className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-400 to-red-500 mx-1" style={{ WebkitTextStroke: '1px rgba(255,255,255,0.2)' }}>VS</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-md">{nextP2?.name}</span>
+                  <CharacterThumb charId={nextP2?.chosenCharacter} size="w-14 h-14" emojiSize="text-4xl" />
+                </div>
               </div>
               <motion.button
                 onClick={handleProceed}
@@ -460,7 +466,7 @@ export default function TournamentBracketView() {
         </motion.div>
       )}
 
-      {/* Tournament complete — reveal champion */}
+      {/* Tournament complete */}
       {isTournamentOver && (
         <motion.div className="fixed bottom-0 left-0 right-0 z-40"
           initial={{ y: 80 }} animate={{ y: 0 }}>
