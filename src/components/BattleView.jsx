@@ -23,7 +23,17 @@ const PARTICLES = Array.from({ length: 12 }, (_, i) => ({
   size: 0.7 + Math.random() * 0.6,
 }));
 
-function CharacterSprite({ player, side, battleState, isLoser }) {
+// KO star trail particles
+const KO_STARS = Array.from({ length: 6 }, (_, i) => ({
+  id: i,
+  delay: i * 0.08,
+  offsetX: (Math.random() - 0.5) * 40,
+  offsetY: (Math.random() - 0.5) * 40,
+  emoji: ['✨', '⭐', '💫', '✨', '⭐', '💫'][i],
+  size: 0.6 + Math.random() * 0.5,
+}));
+
+function CharacterSprite({ player, side, battleState, isLoser, isWinner }) {
   const charId = player?.chosenCharacter;
   const color = FIGHTER_COLORS[charId] || '#888';
   const characters = useGameStore((s) => s.characters);
@@ -32,11 +42,33 @@ function CharacterSprite({ player, side, battleState, isLoser }) {
   const [imgError, setImgError] = useState(false);
   const isLeft = side === 'left';
 
+  const visibleStates = ['intro_p1', 'intro_p2', 'intro_fight', 'idle_question', 'action_throw', 'action_hit', 'action_ko', 'ko_game'];
   const shouldShow =
-    (isLeft && ['intro_p1', 'intro_p2', 'intro_fight', 'idle_question', 'action_throw', 'action_hit'].includes(battleState)) ||
-    (!isLeft && ['intro_p2', 'intro_fight', 'idle_question', 'action_throw', 'action_hit'].includes(battleState));
+    (isLeft && visibleStates.includes(battleState)) ||
+    (!isLeft && visibleStates.filter(s => s !== 'intro_p1').includes(battleState));
 
   const isHit = battleState === 'action_hit' && isLoser;
+  const isKO = (battleState === 'action_ko' || battleState === 'ko_game') && isLoser;
+  const isVictorious = (battleState === 'action_ko' || battleState === 'ko_game') && isWinner;
+
+  // KO fly-off: diagonal away from attacker, upward
+  const koX = isLeft ? '-120vw' : '120vw';
+  const koY = '-80vh';
+
+  // Determine animate props based on state
+  let animateProps = { x: 0, opacity: 1, scale: 1, rotate: 0, y: 0, filter: 'brightness(1)' };
+  let transitionProps = { x: { type: 'tween', ease: 'easeOut', duration: 0.3 } };
+
+  if (isHit) {
+    animateProps.filter = ['brightness(1)', 'brightness(3) saturate(0)', 'brightness(1.5) saturate(2) hue-rotate(-30deg)', 'brightness(1)'];
+    transitionProps.filter = { duration: 0.6, times: [0, 0.2, 0.5, 1] };
+  } else if (isKO) {
+    animateProps = { x: koX, y: koY, opacity: 0, scale: 0.15, rotate: 720 };
+    transitionProps = { duration: 1.2, ease: [0.4, 0, 1, 1] }; // accelerating out
+  } else if (isVictorious) {
+    animateProps = { x: 0, opacity: 1, scale: 1.08, y: -10, filter: 'brightness(1.15)' };
+    transitionProps = { duration: 0.6, ease: 'easeOut' };
+  }
 
   return (
     <AnimatePresence>
@@ -47,17 +79,8 @@ function CharacterSprite({ player, side, battleState, isLoser }) {
               ? 'left-[5vw] sm:left-[10vw] md:left-[15vw]'
               : 'right-[5vw] sm:right-[10vw] md:right-[15vw]'}`}
           initial={{ x: isLeft ? '-100vw' : '100vw', opacity: 0 }}
-          animate={{
-            x: 0,
-            opacity: 1,
-            filter: isHit
-              ? ['brightness(1)', 'brightness(3) saturate(0)', 'brightness(1.5) saturate(2) hue-rotate(-30deg)', 'brightness(1)']
-              : 'brightness(1)',
-          }}
-          transition={{
-            x: { type: 'tween', ease: 'easeOut', duration: 0.3 },
-            filter: isHit ? { duration: 0.6, times: [0, 0.2, 0.5, 1] } : {},
-          }}
+          animate={animateProps}
+          transition={transitionProps}
         >
           <motion.div
             animate={battleState === 'idle_question' ? { y: [0, -6, 0] } : {}}
@@ -88,12 +111,14 @@ function CharacterSprite({ player, side, battleState, isLoser }) {
                   {FIGHTER_EMOJI[charId] || '❓'}
                 </div>
               )}
-              <div
-                className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-bold whitespace-nowrap"
-                style={{ backgroundColor: `${color}cc`, color: '#000' }}
-              >
-                {player?.name}
-              </div>
+              {!isKO && (
+                <div
+                  className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-bold whitespace-nowrap"
+                  style={{ backgroundColor: `${color}cc`, color: '#000' }}
+                >
+                  {player?.name}
+                </div>
+              )}
             </div>
           </motion.div>
         </motion.div>
@@ -161,6 +186,43 @@ function Projectile({ fromSide, onComplete }) {
   );
 }
 
+function KOStarTrail({ side }) {
+  const isRight = side === 'right';
+  // Stars trail from the character position toward the exit direction
+  const startX = isRight ? '15vw' : '85vw'; // loser's position (opposite side from where they exit)
+
+  return (
+    <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden">
+      {KO_STARS.map((star) => (
+        <motion.div
+          key={star.id}
+          className="absolute"
+          style={{
+            left: startX,
+            top: '40%',
+            fontSize: `${star.size * 2}rem`,
+            transform: 'translate(-50%, -50%)',
+          }}
+          initial={{ opacity: 1, scale: 1 }}
+          animate={{
+            opacity: [1, 0.8, 0],
+            scale: [1, 1.3, 0.3],
+            x: star.offsetX,
+            y: star.offsetY - 30,
+          }}
+          transition={{
+            duration: 0.8,
+            delay: star.delay,
+            ease: 'easeOut',
+          }}
+        >
+          {star.emoji}
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
 function HitExplosion({ side }) {
   const isRight = side === 'right';
 
@@ -221,6 +283,8 @@ export default function BattleView() {
   const [pendingLoserId, setPendingLoserId] = useState(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [koScreenShake, setKoScreenShake] = useState(false);
+  const [koLoserSide, setKoLoserSide] = useState(null);
 
   // Intro sequence
   useEffect(() => {
@@ -253,7 +317,6 @@ export default function BattleView() {
     setBattleState('action_hit');
 
     if (pendingLoserId) {
-      // Check if this hit is a K.O. (current damage + 100 = 200%)
       const loserIsP1 = player1?.id === pendingLoserId;
       const currentDmg = loserIsP1 ? p1Damage : p2Damage;
       const isKO = currentDmg >= 100;
@@ -268,26 +331,54 @@ export default function BattleView() {
         useGameStore.getState().playSFX('ko_jingle');
       }
 
+      // Apply damage (at KO this sets matchWinner but stays in battle phase)
       awardDamage(pendingLoserId);
-    }
 
-    setTimeout(() => {
-      const phase = useGameStore.getState().gamePhase;
-      if (phase === 'battle') {
-        setBattleState('idle_question');
-        setShowAnswer(false);
-        setThrowFrom(null);
-        setHitSide(null);
-        setPendingLoserId(null);
+      if (isKO) {
+        // KO sequence: hit flash → screen shake + blast-off → GAME! → victory
+        const loserSide = loserIsP1 ? 'left' : 'right';
+        setTimeout(() => {
+          setKoScreenShake(true);
+          setKoLoserSide(loserSide);
+          setBattleState('action_ko');
+          // Reset screen shake after animation
+          setTimeout(() => setKoScreenShake(false), 400);
+        }, 600); // Brief pause on hit flash before blast-off
+
+        setTimeout(() => {
+          setBattleState('ko_game'); // Show "GAME!" text
+        }, 2000); // After blast-off animation
+
+        setTimeout(() => {
+          useGameStore.setState({ gamePhase: 'victory' });
+        }, 3500); // After "GAME!" text has shown
+      } else {
+        // Normal hit — return to idle after 2s
+        setTimeout(() => {
+          const phase = useGameStore.getState().gamePhase;
+          if (phase === 'battle') {
+            setBattleState('idle_question');
+            setShowAnswer(false);
+            setThrowFrom(null);
+            setHitSide(null);
+            setPendingLoserId(null);
+          }
+        }, 2000);
       }
-    }, 2000);
-  }, [pendingLoserId, awardDamage]);
+    }
+  }, [pendingLoserId, awardDamage, player1, p1Damage, p2Damage]);
 
   const isBlurred = ['idle_question', 'action_throw', 'action_hit'].includes(battleState);
   const showUI = battleState === 'idle_question';
 
   return (
-    <div className="relative min-h-screen flex flex-col overflow-hidden">
+    <motion.div
+      className="relative min-h-screen flex flex-col overflow-hidden"
+      animate={koScreenShake
+        ? { x: [0, -8, 8, -6, 6, -3, 3, 0], y: [0, 4, -4, 3, -3, 2, -1, 0] }
+        : { x: 0, y: 0 }}
+      transition={koScreenShake ? { duration: 0.35, ease: 'easeOut' } : { duration: 0 }}
+    >
       {/* Map background */}
       <div
         className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
@@ -340,9 +431,11 @@ export default function BattleView() {
 
       {/* Character sprites — z-10 so they sit behind center UI */}
       <CharacterSprite player={player1} side="left" battleState={battleState}
-        isLoser={battleState === 'action_hit' && hitSide === 'left'} />
+        isLoser={(battleState === 'action_hit' && hitSide === 'left') || ((battleState === 'action_ko' || battleState === 'ko_game') && koLoserSide === 'left')}
+        isWinner={(battleState === 'action_ko' || battleState === 'ko_game') && koLoserSide === 'right'} />
       <CharacterSprite player={player2} side="right" battleState={battleState}
-        isLoser={battleState === 'action_hit' && hitSide === 'right'} />
+        isLoser={(battleState === 'action_hit' && hitSide === 'right') || ((battleState === 'action_ko' || battleState === 'ko_game') && koLoserSide === 'right')}
+        isWinner={(battleState === 'action_ko' || battleState === 'ko_game') && koLoserSide === 'left'} />
 
       {/* Projectile */}
       <AnimatePresence>
@@ -355,6 +448,47 @@ export default function BattleView() {
       <AnimatePresence>
         {battleState === 'action_hit' && hitSide && (
           <HitExplosion side={hitSide} />
+        )}
+      </AnimatePresence>
+
+      {/* KO star trail */}
+      <AnimatePresence>
+        {battleState === 'action_ko' && koLoserSide && (
+          <KOStarTrail side={koLoserSide} />
+        )}
+      </AnimatePresence>
+
+      {/* KO screen flash */}
+      <AnimatePresence>
+        {koScreenShake && (
+          <motion.div className="absolute inset-0 z-35 pointer-events-none bg-white"
+            initial={{ opacity: 0.8 }} animate={{ opacity: 0 }} transition={{ duration: 0.2 }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* GAME! text — Smash Bros style */}
+      <AnimatePresence>
+        {battleState === 'ko_game' && (
+          <motion.div
+            className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.4 } }}>
+            <motion.h1
+              className="text-8xl sm:text-9xl md:text-[11rem] font-black italic text-red-500"
+              style={{
+                filter: 'drop-shadow(0 8px 0 rgba(0,0,0,0.7)) drop-shadow(0 0 60px rgba(239,68,68,0.6))',
+                WebkitTextStroke: '3px rgba(0,0,0,0.5)',
+              }}
+              initial={{ scale: 5, opacity: 0, rotate: -5 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
+              transition={{ type: 'tween', ease: 'easeOut', duration: 0.25 }}
+            >
+              GAME!
+            </motion.h1>
+            <motion.div className="absolute inset-0 bg-red-500 pointer-events-none"
+              initial={{ opacity: 0.4 }} animate={{ opacity: 0 }} transition={{ duration: 0.3 }} />
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -385,7 +519,7 @@ export default function BattleView() {
 
       {/* HUD */}
       <AnimatePresence>
-        {['idle_question', 'action_throw', 'action_hit', 'intro_fight'].includes(battleState) && (
+        {['idle_question', 'action_throw', 'action_hit', 'intro_fight', 'action_ko', 'ko_game'].includes(battleState) && (
           <motion.div className="relative z-20 px-4 sm:px-8 pt-6"
             initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <div className="max-w-4xl mx-auto flex items-start justify-between">
@@ -518,6 +652,6 @@ export default function BattleView() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

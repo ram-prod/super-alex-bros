@@ -552,10 +552,10 @@ const useGameStore = create(
         currentMatch: newMatch,
         players,
         matchWinner: winner,
-        gamePhase: 'victory',
         pendingMatches: pending,
         completedMatches: completed,
         knockoutRounds,
+        // gamePhase stays 'battle' — BattleView handles KO animation then transitions
       };
     }),
 
