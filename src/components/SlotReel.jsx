@@ -25,7 +25,9 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
   const glowColor = accentColor === 'purple' ? 'rgba(168,85,247,0.5)' : 'rgba(250,204,21,0.5)';
   const borderClass = accentColor === 'purple' ? 'border-purple-400/80' : 'border-yellow-400/80';
 
-  const extended = [...candidates, ...candidates, ...candidates];
+  // Reversed order so visual scroll direction is top-to-bottom
+  const reversed = [...candidates].reverse();
+  const extended = [...reversed, ...reversed, ...reversed];
 
   useEffect(() => { offsetRef.current = offset; }, [offset]);
 
@@ -50,7 +52,7 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
   useEffect(() => {
     if (!winner || !spinning || landedRef.current) return;
 
-    const winnerIdx = candidates.findIndex((p) => p.id === winner.id);
+    const winnerIdx = reversed.findIndex((p) => p.id === winner.id);
     const targetOffset = winnerIdx * step;
 
     const currentOff = offsetRef.current;
@@ -110,7 +112,7 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
       >
         <div
           className="absolute left-1 right-1"
-          style={{ transform: `translateY(${displayOffset + step}px)` }}
+          style={{ transform: `translateY(${-displayOffset + step}px)` }}
         >
           {extended.map((player, i) => {
             const charData = characters.find((c) => c.id === player.chosenCharacter);
