@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
+import CharacterThumb from './CharacterThumb';
 
 const FIGHTER_EMOJI = {
   ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
@@ -65,7 +66,7 @@ export default function VipRouletteView() {
           <motion.div className="mb-8">
             <motion.div key={displayIdx} className="text-7xl mb-3"
               initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.04 }}>
-              {FIGHTER_EMOJI[currentDisplay.chosenCharacter] || '❓'}
+              <CharacterThumb charId={currentDisplay.chosenCharacter} size="w-16 h-16" emojiSize="text-7xl" rounded={false} />
             </motion.div>
             <div className="text-2xl font-black text-white">{currentDisplay.name}</div>
           </motion.div>
@@ -82,7 +83,7 @@ export default function VipRouletteView() {
                 initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'tween', ease: 'easeOut', duration: 0.3, delay: 0.5 }}
                 style={{ boxShadow: '0 0 40px rgba(250,204,21,0.2)' }}>
-                <div className="text-6xl mb-2">{FIGHTER_EMOJI[winner.chosenCharacter] || '❓'}</div>
+                <div className="mb-2 flex justify-center"><CharacterThumb charId={winner.chosenCharacter} size="w-16 h-16" emojiSize="text-6xl" rounded={false} /></div>
                 <div className="text-white font-black text-2xl">{winner.name}</div>
                 <div className="text-yellow-300 text-xs font-bold mt-2">AUTOMATIC BYE 👑</div>
               </motion.div>
@@ -123,7 +124,7 @@ export default function VipRouletteView() {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
               {players.map((p) => (
                 <div key={p.id} className="flex items-center gap-1.5 px-2 py-1 rounded bg-gray-800/50 border border-gray-700/30">
-                  <span className="text-sm">{FIGHTER_EMOJI[p.chosenCharacter] || '❓'}</span>
+                  <CharacterThumb charId={p.chosenCharacter} size="w-5 h-5" emojiSize="text-sm" />
                   <span className="text-xs text-gray-300 font-bold">{p.name}</span>
                 </div>
               ))}

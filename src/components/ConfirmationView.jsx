@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
+import CharacterThumb from './CharacterThumb';
 
 const FIGHTER_EMOJI = {
   ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
@@ -39,7 +40,7 @@ export default function ConfirmationView() {
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           {players.map((p) => (
             <div key={p.id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800/60 border border-gray-700/40">
-              <span className="text-lg">{FIGHTER_EMOJI[p.chosenCharacter] || '❓'}</span>
+              <CharacterThumb charId={p.chosenCharacter} size="w-6 h-6" emojiSize="text-lg" />
               <span className="text-xs font-bold text-white">{p.name}</span>
             </div>
           ))}

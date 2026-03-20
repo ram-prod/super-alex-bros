@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
+import CharacterThumb from './CharacterThumb';
 
 const FIGHTER_EMOJI = {
   ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
@@ -69,7 +70,7 @@ function CharacterSprite({ player, side, battleState, isLoser }) {
                   alt={player?.name}
                   onError={() => setImgError(true)}
                   className="w-40 h-40 sm:w-56 sm:h-56 md:w-72 md:h-72 object-contain drop-shadow-[0_0_15px_rgba(0,0,0,0.8)]"
-                  style={{ transform: isLeft ? 'none' : 'scaleX(-1)', filter: `drop-shadow(0 0 10px ${color}40)` }}
+                  style={{ transform: isLeft ? 'none' : 'scaleX(-1)', filter: `drop-shadow(0 0 20px ${color}70) drop-shadow(0 4px 12px rgba(0,0,0,0.6))` }}
                 />
               ) : !imgError ? (
                 <img
@@ -109,7 +110,7 @@ function DamageHUD({ player, damage, side }) {
   return (
     <div className={`flex flex-col ${isLeft ? 'items-start' : 'items-end'}`}>
       <div className={`flex items-center gap-2 ${!isLeft && 'flex-row-reverse'}`}>
-        <span className="text-xl sm:text-2xl">{FIGHTER_EMOJI[charId] || '❓'}</span>
+        <CharacterThumb charId={charId} size="w-7 h-7 sm:w-8 sm:h-8" emojiSize="text-xl sm:text-2xl" />
         <span className="text-sm sm:text-base font-bold text-white">{player?.name}</span>
         <span className="text-[10px] bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-full font-mono">P{player?.id}</span>
       </div>

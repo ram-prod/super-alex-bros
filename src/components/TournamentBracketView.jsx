@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
 import BackButton from './BackButton';
+import CharacterThumb from './CharacterThumb';
 
 const FIGHTER_EMOJI = {
   ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
@@ -27,13 +28,12 @@ function PlayerSlot({ player, placeholder, isWinner, isVip, isWildcard }) {
     );
   }
   const charId = player.chosenCharacter;
-  const emoji = FIGHTER_EMOJI[charId] || '❓';
 
   return (
     <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-sm font-bold transition-all ${
       isWinner ? 'bg-green-500/15 text-green-300' : player.isEliminated ? 'bg-red-500/5 text-red-400/50 line-through' : 'bg-white/5 text-white'
     }`}>
-      <span className="text-base">{emoji}</span>
+      <CharacterThumb charId={charId} size="w-6 h-6" emojiSize="text-base" />
       <span className="truncate">{player.name}</span>
       {isVip && <span className="text-[9px] text-yellow-400">👑</span>}
       {isWildcard && <span className="text-[9px] text-purple-400">🃏</span>}
@@ -73,10 +73,9 @@ function MatchCard({ match, players, vipPlayerId, selectedWildcards, isActive, a
 
 function VipBadge({ player }) {
   if (!player) return null;
-  const emoji = FIGHTER_EMOJI[player.chosenCharacter] || '❓';
   return (
-    <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-1.5 text-center">
-      <div className="text-lg">{emoji}</div>
+    <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-1.5 text-center flex flex-col items-center">
+      <div className="my-0.5"><CharacterThumb charId={player.chosenCharacter} size="w-7 h-7" emojiSize="text-lg" /></div>
       <div className="text-[10px] font-bold text-yellow-300 truncate">{player.name}</div>
       <div className="text-[8px] text-yellow-500/50 font-mono">VIP BYE</div>
     </div>
@@ -133,7 +132,7 @@ function WildcardRoulette({ candidates, players, onComplete }) {
           <motion.div className="mb-8">
             <motion.div key={displayIdx} className="text-6xl mb-2" initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.05 }}>
-              {FIGHTER_EMOJI[currentDisplay.chosenCharacter] || '❓'}
+              <CharacterThumb charId={currentDisplay.chosenCharacter} size="w-16 h-16" emojiSize="text-6xl" rounded={false} />
             </motion.div>
             <div className="text-xl font-black text-white">{currentDisplay.name}</div>
           </motion.div>
@@ -152,7 +151,7 @@ function WildcardRoulette({ candidates, players, onComplete }) {
                     initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: 'tween', ease: 'easeOut', duration: 0.3, delay: 0.5 + i * 0.4 }}
                     style={{ boxShadow: '0 0 25px rgba(168,85,247,0.2)' }}>
-                    <div className="text-4xl mb-1">{FIGHTER_EMOJI[p.chosenCharacter] || '❓'}</div>
+                    <div className="mb-1 flex justify-center"><CharacterThumb charId={p.chosenCharacter} size="w-12 h-12" emojiSize="text-4xl" rounded={false} /></div>
                     <div className="text-white font-black">{p.name}</div>
                     <div className="text-purple-300 text-[10px] font-bold mt-1">RESURRECTED 🃏</div>
                   </motion.div>
@@ -192,7 +191,7 @@ function WildcardRoulette({ candidates, players, onComplete }) {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
               {candidatePlayers.map((p) => (
                 <div key={p.id} className="flex items-center gap-1.5 px-2 py-1 rounded bg-gray-800/50 border border-gray-700/30">
-                  <span className="text-sm">{FIGHTER_EMOJI[p.chosenCharacter] || '❓'}</span>
+                  <CharacterThumb charId={p.chosenCharacter} size="w-5 h-5" emojiSize="text-sm" />
                   <span className="text-xs text-gray-300 font-bold">{p.name}</span>
                 </div>
               ))}
@@ -437,11 +436,11 @@ export default function TournamentBracketView() {
           <div className="bg-gradient-to-t from-black via-black/95 to-transparent pt-6 pb-4 px-4">
             <div className="max-w-md mx-auto">
               <div className="flex items-center justify-center gap-3 mb-3">
-                <span className="text-4xl drop-shadow-lg">{FIGHTER_EMOJI[nextP1?.chosenCharacter] || '❓'}</span>
+                <CharacterThumb charId={nextP1?.chosenCharacter} size="w-10 h-10" emojiSize="text-4xl" />
                 <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-md">{nextP1?.name}</span>
                 <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-400 to-red-500 mx-2" style={{ WebkitTextStroke: '1px rgba(255,255,255,0.2)' }}>VS</span>
                 <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-md">{nextP2?.name}</span>
-                <span className="text-4xl drop-shadow-lg">{FIGHTER_EMOJI[nextP2?.chosenCharacter] || '❓'}</span>
+                <CharacterThumb charId={nextP2?.chosenCharacter} size="w-10 h-10" emojiSize="text-4xl" />
               </div>
               <motion.button
                 onClick={handleProceed}

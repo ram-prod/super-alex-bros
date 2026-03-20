@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
 import BackButton from './BackButton';
+import CharacterThumb from './CharacterThumb';
 
 const FIGHTER_COLORS = {
   ruggero: '#ff4444',
@@ -43,7 +44,7 @@ function FighterCard({ character, currentPlayerId, players }) {
     <motion.button
       onClick={() => assignCharacter(currentPlayerId, character.id)}
       disabled={isTaken}
-      className={`relative group rounded-xl overflow-hidden border-2 transition-all duration-200 aspect-square flex flex-col items-center justify-center gap-2 w-[calc(33.333%-0.5rem)] sm:w-[calc(25%-0.5rem)] md:w-[calc(16.666%-0.625rem)]
+      className={`relative group rounded-xl overflow-hidden border-2 transition-all duration-200 aspect-square w-[calc(33.333%-0.5rem)] sm:w-[calc(25%-0.5rem)] md:w-[calc(16.666%-0.625rem)] flex items-center justify-center
         ${isCurrentPlayers
           ? 'border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.5)] bg-gray-800/90 scale-[1.02]'
           : isTaken
@@ -64,24 +65,34 @@ function FighterCard({ character, currentPlayerId, players }) {
         />
       )}
 
-      {/* Fighter image with emoji fallback */}
-      <div className="relative z-10 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden flex items-center justify-center">
+      {/* Fighter image — fills entire card */}
+      {character.portrait ? (
         <img
-          src={character.portrait ? `/assets/characters/${character.portrait}` : `/assets/characters/${character.id}.jpg`}
+          src={`/assets/characters/${character.portrait}`}
           alt={character.name}
-          className="w-full h-full object-cover"
-          onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
+          className="absolute inset-0 w-full h-full object-cover z-0"
         />
-        <span className="text-4xl sm:text-5xl hidden">{FIGHTER_EMOJI[character.id]}</span>
-      </div>
+      ) : (
+        <div className="relative z-10 flex items-center justify-center">
+          <img
+            src={`/assets/characters/${character.id}.jpg`}
+            alt={character.name}
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover"
+            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
+          />
+          <span className="text-4xl sm:text-5xl hidden">{FIGHTER_EMOJI[character.id]}</span>
+        </div>
+      )}
 
-      {/* Name */}
-      <span
-        className="text-sm sm:text-base font-bold tracking-wide relative z-10"
-        style={{ color: isCurrentPlayers ? color : isTaken ? '#666' : '#ddd' }}
-      >
-        {character.name}
-      </span>
+      {/* Name — overlaid at bottom with gradient backdrop */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-1.5 pt-5 pb-1.5">
+        <span
+          className="block text-center text-xs sm:text-sm font-bold tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,1)]"
+          style={{ color: isCurrentPlayers ? color : isTaken ? '#666' : '#eee' }}
+        >
+          {character.name}
+        </span>
+      </div>
 
       {/* Taken overlay */}
       {isTaken && (
@@ -180,8 +191,8 @@ function PlayerTabs() {
                 )}
                 P{p.id}
                 {hasChar && (
-                  <span className="text-[10px] opacity-60">
-                    {FIGHTER_EMOJI[p.chosenCharacter]}
+                  <span className="opacity-60">
+                    <CharacterThumb charId={p.chosenCharacter} size="w-4 h-4" emojiSize="text-[10px]" />
                   </span>
                 )}
               </div>

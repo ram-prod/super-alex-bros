@@ -1,10 +1,6 @@
 import { motion } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
-
-const FIGHTER_EMOJI = {
-  ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
-  frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
-};
+import CharacterThumb from './CharacterThumb';
 
 export default function VipRevealView() {
   const players = useGameStore((s) => s.players);
@@ -13,7 +9,6 @@ export default function VipRevealView() {
 
   const vipPlayer = players.find((p) => p.id === vipPlayerId);
   const charId = vipPlayer?.chosenCharacter;
-  const emoji = FIGHTER_EMOJI[charId] || '❓';
 
   const handleProceed = () => {
     generateTournament();
@@ -33,7 +28,7 @@ export default function VipRevealView() {
           initial={{ scale: 0, rotate: -20 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: 'tween', ease: 'easeOut', duration: 0.4, delay: 0.3 }}>
-          {emoji}
+          <CharacterThumb charId={charId} size="w-24 h-24 sm:w-32 sm:h-32" emojiSize="text-8xl sm:text-9xl" rounded={false} />
         </motion.div>
 
         <motion.h1
