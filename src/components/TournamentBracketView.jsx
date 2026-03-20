@@ -119,17 +119,20 @@ function WildcardRoulette({ candidates, players, onComplete }) {
   const candidatePlayers = candidates.map((id) => players.find((p) => p.id === id)).filter(Boolean);
 
   useEffect(() => {
-    if (phase !== 'spinning') return;
+    if (phase !== 'spinning' || slotWinner) return;
     const timeout = setTimeout(() => {
       const shuffled = [...candidatePlayers].sort(() => Math.random() - 0.5);
       const count = useGameStore.getState().bracketConfig?.wildcards || 1;
       const winners = shuffled.slice(0, count);
-      setSlotWinner(winners[0]); // Slot lands on first wildcard
+      setSlotWinner(winners[0]);
       setRevealed(winners);
-      setTimeout(() => setPhase('reveal'), 1800);
-    }, 2500);
+    }, 2000);
     return () => clearTimeout(timeout);
-  }, [phase, candidatePlayers.length]);
+  }, [phase, slotWinner, candidatePlayers.length]);
+
+  const handleLanded = () => {
+    setTimeout(() => setPhase('reveal'), 400);
+  };
 
   return (
     <motion.div className="absolute inset-0 z-40 flex flex-col items-center justify-center px-6"
@@ -161,6 +164,7 @@ function WildcardRoulette({ candidates, players, onComplete }) {
                 winner={slotWinner}
                 accentColor="purple"
                 size={160}
+                onLanded={handleLanded}
               />
             </motion.div>
           )}

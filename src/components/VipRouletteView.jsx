@@ -48,16 +48,20 @@ export default function VipRouletteView() {
   const [phase, setPhase] = useState('intro'); // 'intro' | 'spinning' | 'reveal'
   const [winner, setWinner] = useState(null);
 
+  // Pick winner after 2s of spinning — reel will decelerate to land on them
   useEffect(() => {
-    if (phase !== 'spinning') return;
+    if (phase !== 'spinning' || winner) return;
     const timeout = setTimeout(() => {
       const picked = players[Math.floor(Math.random() * players.length)];
       setWinner(picked);
-      // Brief pause for deceleration, then reveal
-      setTimeout(() => setPhase('reveal'), 1800);
-    }, 2500);
+    }, 2000);
     return () => clearTimeout(timeout);
-  }, [phase, players]);
+  }, [phase, winner, players]);
+
+  // Called by SlotReel when deceleration is complete and reel has landed
+  const handleLanded = () => {
+    setTimeout(() => setPhase('reveal'), 400); // brief pause then reveal
+  };
 
   const handleProceed = () => {
     if (winner) {
@@ -105,6 +109,7 @@ export default function VipRouletteView() {
                 winner={winner}
                 accentColor="yellow"
                 size={180}
+                onLanded={handleLanded}
               />
             </motion.div>
           )}
