@@ -45,8 +45,8 @@
     {
       "id": "devan",
       "name": "Devan",
-      "portrait": null,
-      "body": null
+      "portrait": "devan-portrait.jpg",
+      "body": "devan-body.png"
     },
     {
       "id": "gereon",
