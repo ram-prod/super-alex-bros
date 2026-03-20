@@ -7,11 +7,10 @@ const FIGHTER_EMOJI = {
 };
 
 /*
- * Diagonal split angle: clip-path goes from 58% (top) to 42% (bottom).
- * That's a 16% horizontal shift over 100% vertical = atan(16/100) ≈ 9.09°.
- * We use the same skewX for the energy slash so they align perfectly.
+ * Diagonal split: clip-path from (58%, 0) to (42%, 100%).
+ * The energy slash uses the SAME clip-path coordinates so it always
+ * aligns perfectly regardless of screen size or aspect ratio.
  */
-const SLASH_SKEW = 'skewX(-9.1deg)';
 
 function FighterPanel({ player, side, characters }) {
   const charId = player?.chosenCharacter;
@@ -134,29 +133,30 @@ export default function VsScreenView() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.3 }}
       >
+        {/* Single slash element using same clip-path coords as the red/blue split */}
         {/* Wide outer glow */}
         <div
-          className="absolute h-[120%] w-[40px] sm:w-[60px]"
+          className="absolute inset-0"
           style={{
-            transform: SLASH_SKEW,
+            clipPath: 'polygon(56% 0, 60% 0, 44% 100%, 40% 100%)',
             background: 'linear-gradient(180deg, rgba(250,204,21,0.05), rgba(255,255,255,0.15) 30%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.15) 70%, rgba(250,204,21,0.05))',
-            filter: 'blur(16px)',
+            filter: 'blur(8px)',
           }}
         />
         {/* Medium glow */}
         <div
-          className="absolute h-[120%] w-[12px] sm:w-[16px]"
+          className="absolute inset-0"
           style={{
-            transform: SLASH_SKEW,
-            background: 'linear-gradient(180deg, rgba(250,204,21,0.2), rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.5) 70%, rgba(250,204,21,0.2))',
-            filter: 'blur(6px)',
+            clipPath: 'polygon(57.5% 0, 58.5% 0, 42.5% 100%, 41.5% 100%)',
+            background: 'linear-gradient(180deg, rgba(250,204,21,0.2), rgba(255,255,255,0.6) 30%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.6) 70%, rgba(250,204,21,0.2))',
+            filter: 'blur(3px)',
           }}
         />
-        {/* Sharp center line */}
+        {/* Sharp center line — exact same line as the split */}
         <div
-          className="absolute h-[120%] w-[3px]"
+          className="absolute inset-0"
           style={{
-            transform: SLASH_SKEW,
+            clipPath: 'polygon(57.9% 0, 58.1% 0, 42.1% 100%, 41.9% 100%)',
             background: 'linear-gradient(180deg, rgba(250,204,21,0.6), rgba(255,255,255,1) 20%, rgba(255,255,255,1) 80%, rgba(250,204,21,0.6))',
           }}
         />
