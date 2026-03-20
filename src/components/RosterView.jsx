@@ -32,7 +32,7 @@ const FIGHTER_EMOJI = {
   alexander: '👑',
 };
 
-function FighterCard({ character, currentPlayerId, players }) {
+function FighterCard({ character, currentPlayerId, players, animDelay = 0 }) {
   const assignCharacter = useGameStore((s) => s.assignCharacter);
 
   const takenBy = players.find((p) => p.chosenCharacter === character.id);
@@ -51,6 +51,9 @@ function FighterCard({ character, currentPlayerId, players }) {
             ? 'border-gray-700 bg-gray-900/60 opacity-40 grayscale cursor-not-allowed'
             : 'border-gray-700/50 bg-gray-900/80 hover:border-gray-500 cursor-pointer'
         }`}
+      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'tween', ease: 'easeOut', duration: 0.35, delay: animDelay }}
       whileHover={!isTaken ? { scale: 1.08, y: -4 } : {}}
       whileTap={!isTaken ? { scale: 0.95 } : {}}
       layout
@@ -254,10 +257,14 @@ export default function RosterView() {
       </div>
 
       {/* Size Selector */}
-      <SizeSelector />
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.35, ease: 'easeOut' }}>
+        <SizeSelector />
+      </motion.div>
 
       {/* Player Tabs */}
-      <PlayerTabs />
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.35, ease: 'easeOut' }}>
+        <PlayerTabs />
+      </motion.div>
 
       {/* Current Turn Banner */}
       <motion.div
@@ -282,19 +289,20 @@ export default function RosterView() {
       {/* Fighter Grid */}
       <div className="flex-1 px-4 pb-4">
         <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
-          {characters.map((char) => (
+          {characters.map((char, i) => (
             <FighterCard
               key={char.id}
               character={char}
               currentPlayerId={currentTurn}
               players={players}
+              animDelay={0.15 + i * 0.04}
             />
           ))}
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="px-4 pb-3">
+      <motion.div className="px-4 pb-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.4 }}>
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between text-xs text-gray-500 mb-1 font-mono">
             <span>{lockedCount}/{tournamentSize} locked in</span>
@@ -313,7 +321,7 @@ export default function RosterView() {
             />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* START TOURNAMENT Button */}
       <AnimatePresence>
