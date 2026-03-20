@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
 import CharacterThumb from './CharacterThumb';
@@ -13,16 +13,6 @@ const FIGHTER_COLORS = {
   frederik: '#ffdd44', vincent: '#ff44aa', devan: '#44ffdd', gereon: '#8888ff', noah: '#ff6666', alexander: '#ffd700',
 };
 
-// Fountain particles — pre-generated random offsets
-const PARTICLES = Array.from({ length: 12 }, (_, i) => ({
-  id: i,
-  xOffset: (Math.random() - 0.5) * 150,
-  peakY: -200 - Math.random() * 100,
-  delay: Math.random() * 0.1,
-  emoji: ['💔', '💥', '✨', '💔', '💥'][i % 5],
-  size: 0.7 + Math.random() * 0.6,
-}));
-
 // KO star trail particles
 const KO_STARS = Array.from({ length: 6 }, (_, i) => ({
   id: i,
@@ -33,7 +23,7 @@ const KO_STARS = Array.from({ length: 6 }, (_, i) => ({
   size: 0.6 + Math.random() * 0.5,
 }));
 
-function CharacterSprite({ player, side, battleState, isLoser, isWinner }) {
+const CharacterSprite = forwardRef(function CharacterSprite({ player, side, battleState, isLoser, isWinner }, ref) {
   const charId = player?.chosenCharacter;
   const color = FIGHTER_COLORS[charId] || '#888';
   const characters = useGameStore((s) => s.characters);
@@ -41,6 +31,16 @@ function CharacterSprite({ player, side, battleState, isLoser, isWinner }) {
   const hasBody = !!charData?.body;
   const [imgError, setImgError] = useState(false);
   const isLeft = side === 'left';
+  const containerRef = useRef(null);
+
+  useImperativeHandle(ref, () => ({
+    getCenter: () => {
+      const el = containerRef.current;
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    },
+  }));
 
   const visibleStates = ['intro_p1', 'intro_p2', 'intro_fight', 'idle_question', 'action_throw', 'action_hit', 'action_ko', 'ko_game'];
   const shouldShow =
@@ -85,6 +85,7 @@ function CharacterSprite({ player, side, battleState, isLoser, isWinner }) {
     <AnimatePresence>
       {shouldShow && (
         <motion.div
+          ref={containerRef}
           className={`absolute bottom-[10vh] z-10
             ${isLeft
               ? 'left-[5vw] sm:left-[10vw] md:left-[15vw]'
@@ -136,7 +137,7 @@ function CharacterSprite({ player, side, battleState, isLoser, isWinner }) {
       )}
     </AnimatePresence>
   );
-}
+});
 
 function DamageHUD({ player, damage, side }) {
   const charId = player?.chosenCharacter;
@@ -169,48 +170,56 @@ function DamageHUD({ player, damage, side }) {
   );
 }
 
-function Projectile({ fromSide, onComplete }) {
-  const isFromLeft = fromSide === 'left';
+function Projectile({ startPos, endPos, onComplete }) {
+  if (!startPos || !endPos) return null;
+
+  const dx = endPos.x - startPos.x;
+  const dy = endPos.y - startPos.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  // Arc height proportional to distance (40%), capped for very wide screens
+  const arcHeight = Math.min(distance * 0.4, 300);
+  // Duration scales with distance for consistent perceived speed
+  const duration = Math.max(0.8, Math.min(1.5, distance / 600));
 
   return (
     <motion.div
-      className="absolute z-30 text-5xl sm:text-6xl"
-      style={{ top: '45%' }}
-      initial={{
-        left: isFromLeft ? '15vw' : '85vw',
-        x: '-50%',
-      }}
+      className="fixed z-30 text-5xl sm:text-6xl pointer-events-none"
+      style={{ left: startPos.x, top: startPos.y, transform: 'translate(-50%, -50%)' }}
       animate={{
-        left: isFromLeft ? '85vw' : '15vw',
-        y: [0, -250, 0],
+        left: endPos.x,
+        top: endPos.y,
         rotate: [0, 360, 720],
       }}
       transition={{
-        left: { duration: 1.5, ease: 'linear' },
-        y: { duration: 1.5, ease: 'easeInOut' },
-        rotate: { duration: 1.5, ease: 'linear' },
+        left: { duration, ease: 'linear' },
+        top: { duration, ease: 'linear' },
+        rotate: { duration, ease: 'linear' },
       }}
       onAnimationComplete={onComplete}
     >
-      🍺
+      {/* The beer follows a parabolic arc via a nested y-offset div */}
+      <motion.div
+        animate={{ y: [0, -arcHeight, 0] }}
+        transition={{ duration, ease: 'easeInOut' }}
+      >
+        🍺
+      </motion.div>
     </motion.div>
   );
 }
 
-function KOStarTrail({ side }) {
-  const isRight = side === 'right';
-  // Stars trail from the character position toward the exit direction
-  const startX = isRight ? '15vw' : '85vw'; // loser's position (opposite side from where they exit)
+function KOStarTrail({ targetPos }) {
+  if (!targetPos) return null;
 
   return (
-    <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden">
+    <div className="fixed inset-0 z-30 pointer-events-none overflow-hidden">
       {KO_STARS.map((star) => (
         <motion.div
           key={star.id}
           className="absolute"
           style={{
-            left: startX,
-            top: '40%',
+            left: targetPos.x,
+            top: targetPos.y,
             fontSize: `${star.size * 2}rem`,
             transform: 'translate(-50%, -50%)',
           }}
@@ -234,33 +243,46 @@ function KOStarTrail({ side }) {
   );
 }
 
-function HitExplosion({ side }) {
-  const isRight = side === 'right';
+// Beer-splash particles — short upward burst then drip down with gravity
+const SPLASH_PARTICLES = Array.from({ length: 14 }, (_, i) => ({
+  id: i,
+  // Mild horizontal spread, heavier vertical (drip effect)
+  xSpread: (Math.random() - 0.5) * 80,
+  // Initial upward burst (short), then gravity pulls down
+  burstY: -30 - Math.random() * 50,
+  dripY: 120 + Math.random() * 150,
+  delay: Math.random() * 0.08,
+  emoji: ['💦', '🍺', '💔', '💦', '💔', '💥', '💦', '🍺', '💦', '💔', '💦', '💥', '💦', '💔'][i],
+  size: 0.5 + Math.random() * 0.6,
+}));
+
+function HitExplosion({ targetPos }) {
+  if (!targetPos) return null;
 
   return (
-    <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden">
-      {PARTICLES.map((p) => (
+    <div className="fixed inset-0 z-30 pointer-events-none overflow-hidden">
+      {SPLASH_PARTICLES.map((p) => (
         <motion.div
           key={p.id}
           className="absolute"
           style={{
-            left: isRight ? '85vw' : '15vw',
-            top: '45%',
+            left: targetPos.x,
+            top: targetPos.y,
             fontSize: `${p.size * 1.8}rem`,
             transform: 'translate(-50%, -50%)',
           }}
           initial={{ opacity: 1, scale: 1 }}
           animate={{
-            x: [0, p.xOffset, p.xOffset * 1.2],
-            y: [0, p.peakY, 100],
+            x: [0, p.xSpread * 0.4, p.xSpread],
+            y: [0, p.burstY, p.dripY],
             opacity: [1, 1, 0],
-            scale: [1, 1.2, 0.5],
+            scale: [1.2, 1, 0.4],
           }}
           transition={{
-            duration: 1.5,
+            duration: 1.3,
             delay: p.delay,
             ease: 'easeOut',
-            y: { ease: [0.2, 0, 0.8, 1] }, // gravity-like
+            y: { ease: [0.15, 0, 0.85, 1] }, // burst up then gravity drip
           }}
         >
           {p.emoji}
@@ -270,8 +292,8 @@ function HitExplosion({ side }) {
       <motion.div
         className="absolute text-6xl sm:text-7xl"
         style={{
-          left: isRight ? '85vw' : '15vw',
-          top: '42%',
+          left: targetPos.x,
+          top: targetPos.y - 10,
           transform: 'translate(-50%, -50%)',
         }}
         initial={{ scale: 0, opacity: 1 }}
@@ -296,6 +318,11 @@ export default function BattleView() {
   const [showExitModal, setShowExitModal] = useState(false);
   const [koScreenShake, setKoScreenShake] = useState(false);
   const [koLoserSide, setKoLoserSide] = useState(null);
+  const [projectileCoords, setProjectileCoords] = useState(null); // { start, end }
+  const [hitTargetPos, setHitTargetPos] = useState(null);
+
+  const p1Ref = useRef(null);
+  const p2Ref = useRef(null);
 
   // Intro sequence
   useEffect(() => {
@@ -317,6 +344,16 @@ export default function BattleView() {
     const loserIsP1 = player1?.id === loserId;
     const winnerSide = loserIsP1 ? 'right' : 'left';
     const loserSide = loserIsP1 ? 'left' : 'right';
+
+    // Capture character positions at throw moment
+    const winnerRef = loserIsP1 ? p2Ref : p1Ref;
+    const loserRef = loserIsP1 ? p1Ref : p2Ref;
+    const startPos = winnerRef.current?.getCenter?.();
+    const endPos = loserRef.current?.getCenter?.();
+    if (startPos && endPos) {
+      setProjectileCoords({ start: startPos, end: endPos });
+      setHitTargetPos(endPos);
+    }
 
     setPendingLoserId(loserId);
     setThrowFrom(winnerSide);
@@ -371,6 +408,8 @@ export default function BattleView() {
             setThrowFrom(null);
             setHitSide(null);
             setPendingLoserId(null);
+            setProjectileCoords(null);
+            setHitTargetPos(null);
           }
         }, 2000);
       }
@@ -439,31 +478,31 @@ export default function BattleView() {
       </AnimatePresence>
 
       {/* Character sprites — z-10 so they sit behind center UI */}
-      <CharacterSprite player={player1} side="left" battleState={battleState}
+      <CharacterSprite ref={p1Ref} player={player1} side="left" battleState={battleState}
         isLoser={(battleState === 'action_hit' && hitSide === 'left') || ((battleState === 'action_ko' || battleState === 'ko_game') && koLoserSide === 'left')}
         isWinner={(battleState === 'action_ko' || battleState === 'ko_game') && koLoserSide === 'right'} />
-      <CharacterSprite player={player2} side="right" battleState={battleState}
+      <CharacterSprite ref={p2Ref} player={player2} side="right" battleState={battleState}
         isLoser={(battleState === 'action_hit' && hitSide === 'right') || ((battleState === 'action_ko' || battleState === 'ko_game') && koLoserSide === 'right')}
         isWinner={(battleState === 'action_ko' || battleState === 'ko_game') && koLoserSide === 'left'} />
 
       {/* Projectile */}
       <AnimatePresence>
-        {battleState === 'action_throw' && throwFrom && (
-          <Projectile fromSide={throwFrom} onComplete={handleThrowComplete} />
+        {battleState === 'action_throw' && projectileCoords && (
+          <Projectile startPos={projectileCoords.start} endPos={projectileCoords.end} onComplete={handleThrowComplete} />
         )}
       </AnimatePresence>
 
       {/* Hit explosion fountain */}
       <AnimatePresence>
-        {(battleState === 'action_hit' || battleState === 'action_ko') && (hitSide || koLoserSide) && (
-          <HitExplosion side={hitSide || koLoserSide} />
+        {(battleState === 'action_hit' || battleState === 'action_ko') && hitTargetPos && (
+          <HitExplosion targetPos={hitTargetPos} />
         )}
       </AnimatePresence>
 
       {/* KO star trail */}
       <AnimatePresence>
-        {battleState === 'action_ko' && koLoserSide && (
-          <KOStarTrail side={koLoserSide} />
+        {battleState === 'action_ko' && hitTargetPos && (
+          <KOStarTrail targetPos={hitTargetPos} />
         )}
       </AnimatePresence>
 
