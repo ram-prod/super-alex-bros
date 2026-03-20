@@ -51,9 +51,11 @@ function CharacterSprite({ player, side, battleState, isLoser, isWinner }) {
   const isKO = (battleState === 'action_ko' || battleState === 'ko_game') && isLoser;
   const isVictorious = (battleState === 'action_ko' || battleState === 'ko_game') && isWinner;
 
-  // KO fly-off: diagonal away from attacker, upward
-  const koX = isLeft ? '-120vw' : '120vw';
-  const koY = '-80vh';
+  // KO fly-off: diagonal toward upper corner away from attacker
+  // Character sits at bottom-[10vh], so needs to travel ~90vh upward to exit top
+  // Using vmin-based values so it scales across all screen dimensions
+  const koX = isLeft ? '-60vw' : '60vw';
+  const koY = '-90vh';
 
   // Determine animate props based on state
   let animateProps = { x: 0, opacity: 1, scale: 1, rotate: 0, y: 0, filter: 'brightness(1)' };
@@ -63,8 +65,17 @@ function CharacterSprite({ player, side, battleState, isLoser, isWinner }) {
     animateProps.filter = ['brightness(1)', 'brightness(3) saturate(0)', 'brightness(1.5) saturate(2) hue-rotate(-30deg)', 'brightness(1)'];
     transitionProps.filter = { duration: 0.6, times: [0, 0.2, 0.5, 1] };
   } else if (isKO) {
-    animateProps = { x: koX, y: koY, opacity: 0, scale: 0.15, rotate: 720 };
-    transitionProps = { duration: 1.2, ease: [0.4, 0, 1, 1] }; // accelerating out
+    animateProps = {
+      x: koX, y: koY, opacity: [1, 1, 0], scale: [1, 1, 0.15], rotate: 720,
+      filter: ['brightness(3) saturate(0)', 'brightness(1.5)', 'brightness(1)'],
+    };
+    transitionProps = {
+      duration: 1.2,
+      ease: [0.4, 0, 1, 1], // accelerating out
+      opacity: { duration: 1.2, times: [0, 0.7, 1] },
+      scale: { duration: 1.2, times: [0, 0.1, 1] },
+      filter: { duration: 0.4 },
+    };
   } else if (isVictorious) {
     animateProps = { x: 0, opacity: 1, scale: 1.08, y: -10, filter: 'brightness(1.15)' };
     transitionProps = { duration: 0.6, ease: 'easeOut' };
@@ -335,23 +346,21 @@ export default function BattleView() {
       awardDamage(pendingLoserId);
 
       if (isKO) {
-        // KO sequence: hit flash → screen shake + blast-off → GAME! → victory
+        // KO sequence: immediate blast-off on hit → GAME! → victory
         const loserSide = loserIsP1 ? 'left' : 'right';
-        setTimeout(() => {
-          setKoScreenShake(true);
-          setKoLoserSide(loserSide);
-          setBattleState('action_ko');
-          // Reset screen shake after animation
-          setTimeout(() => setKoScreenShake(false), 400);
-        }, 600); // Brief pause on hit flash before blast-off
+        // Instant: screen shake + blast-off starts with the hit
+        setKoScreenShake(true);
+        setKoLoserSide(loserSide);
+        setBattleState('action_ko');
+        setTimeout(() => setKoScreenShake(false), 400);
 
         setTimeout(() => {
-          setBattleState('ko_game'); // Show "GAME!" text
-        }, 2000); // After blast-off animation
+          setBattleState('ko_game'); // Show "GAME!" after blast-off completes
+        }, 1400); // 1.2s fly-off + 0.2s breathing room
 
         setTimeout(() => {
           useGameStore.setState({ gamePhase: 'victory' });
-        }, 3500); // After "GAME!" text has shown
+        }, 3000); // GAME! visible for ~1.6s then victory
       } else {
         // Normal hit — return to idle after 2s
         setTimeout(() => {
@@ -446,8 +455,8 @@ export default function BattleView() {
 
       {/* Hit explosion fountain */}
       <AnimatePresence>
-        {battleState === 'action_hit' && hitSide && (
-          <HitExplosion side={hitSide} />
+        {(battleState === 'action_hit' || battleState === 'action_ko') && (hitSide || koLoserSide) && (
+          <HitExplosion side={hitSide || koLoserSide} />
         )}
       </AnimatePresence>
 
