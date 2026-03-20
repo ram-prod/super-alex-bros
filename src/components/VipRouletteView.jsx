@@ -1,8 +1,45 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
-import CharacterThumb from './CharacterThumb';
 import SlotReel from './SlotReel';
+
+const FIGHTER_EMOJI = {
+  ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
+  frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
+};
+
+/**
+ * Reveal card — matches RosterView FighterCard style.
+ * Portrait fills the card, name overlaid at bottom with gradient.
+ */
+function RevealCard({ player, accentColor = 'yellow', label = '' }) {
+  const characters = useGameStore((s) => s.characters);
+  const charData = characters.find((c) => c.id === player.chosenCharacter);
+  const borderColor = accentColor === 'purple' ? 'border-purple-400' : 'border-yellow-400';
+  const glowColor = accentColor === 'purple' ? 'rgba(168,85,247,0.4)' : 'rgba(250,204,21,0.4)';
+  const labelColor = accentColor === 'purple' ? 'text-purple-300' : 'text-yellow-300';
+
+  return (
+    <div
+      className={`relative rounded-xl overflow-hidden border-2 ${borderColor} w-36 h-36 sm:w-44 sm:h-44`}
+      style={{ boxShadow: `0 0 40px ${glowColor}` }}
+    >
+      {charData?.portrait ? (
+        <img src={`/assets/characters/${charData.portrait}`} alt={player.name} className="absolute inset-0 w-full h-full object-cover" />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80">
+          <span className="text-6xl">{FIGHTER_EMOJI[player.chosenCharacter] || '❓'}</span>
+        </div>
+      )}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2 pt-6 pb-2">
+        <span className="block text-center text-base sm:text-lg font-black tracking-wide text-white drop-shadow-[0_1px_3px_rgba(0,0,0,1)]">
+          {player.name}
+        </span>
+        {label && <span className={`block text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider ${labelColor} mt-0.5`}>{label}</span>}
+      </div>
+    </div>
+  );
+}
 
 export default function VipRouletteView() {
   const players = useGameStore((s) => s.players);
@@ -83,15 +120,11 @@ export default function VipRouletteView() {
             >
               <div className="text-yellow-400 text-xs uppercase tracking-widest font-bold mb-3">👑 The VIP Is...</div>
               <motion.div
-                className="inline-block bg-yellow-500/10 border-2 border-yellow-400/50 rounded-xl p-6 text-center"
+                className="inline-block"
                 initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'tween', ease: 'easeOut', duration: 0.3, delay: 0.3 }}
-                style={{ boxShadow: '0 0 40px rgba(250,204,21,0.3)' }}>
-                <div className="mb-2 flex justify-center">
-                  <CharacterThumb charId={winner.chosenCharacter} size="w-20 h-20" emojiSize="text-6xl" rounded={false} />
-                </div>
-                <div className="text-white font-black text-3xl">{winner.name}</div>
-                <div className="text-yellow-300 text-sm font-bold mt-2 uppercase tracking-wider">Automatic Bye 👑</div>
+              >
+                <RevealCard player={winner} accentColor="yellow" label="AUTOMATIC BYE 👑" />
               </motion.div>
 
               <motion.button onClick={handleProceed}

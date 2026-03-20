@@ -171,17 +171,30 @@ function WildcardRoulette({ candidates, players, onComplete }) {
                 {revealed.length === 1 ? '🃏 The Wildcard Is...' : '🃏 The Wildcards Are...'}
               </div>
               <div className="flex justify-center gap-4">
-                {revealed.map((p, i) => (
-                  <motion.div key={p.id}
-                    className="bg-purple-500/10 border-2 border-purple-400/50 rounded-xl p-4 text-center min-w-[120px]"
-                    initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: 'tween', ease: 'easeOut', duration: 0.3, delay: 0.3 + i * 0.4 }}
-                    style={{ boxShadow: '0 0 25px rgba(168,85,247,0.2)' }}>
-                    <div className="mb-1 flex justify-center"><CharacterThumb charId={p.chosenCharacter} size="w-14 h-14" emojiSize="text-4xl" rounded={false} /></div>
-                    <div className="text-white font-black text-lg">{p.name}</div>
-                    <div className="text-purple-300 text-[10px] font-bold mt-1">RESURRECTED 🃏</div>
-                  </motion.div>
-                ))}
+                {revealed.map((p, i) => {
+                  const charData = players.find((pl) => pl.id === p.id);
+                  const cData = useGameStore.getState().characters.find((c) => c.id === p.chosenCharacter);
+                  return (
+                    <motion.div key={p.id}
+                      initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: 'tween', ease: 'easeOut', duration: 0.3, delay: 0.3 + i * 0.4 }}>
+                      <div className="relative rounded-xl overflow-hidden border-2 border-purple-400 w-32 h-32 sm:w-40 sm:h-40"
+                        style={{ boxShadow: '0 0 35px rgba(168,85,247,0.4)' }}>
+                        {cData?.portrait ? (
+                          <img src={`/assets/characters/${cData.portrait}`} alt={p.name} className="absolute inset-0 w-full h-full object-cover" />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80">
+                            <span className="text-5xl">{FIGHTER_EMOJI[p.chosenCharacter] || '❓'}</span>
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2 pt-6 pb-2">
+                          <span className="block text-center text-sm sm:text-base font-black tracking-wide text-white drop-shadow-[0_1px_3px_rgba(0,0,0,1)]">{p.name}</span>
+                          <span className="block text-center text-[10px] font-bold uppercase tracking-wider text-purple-300 mt-0.5">RESURRECTED 🃏</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
               <motion.button onClick={() => onComplete(revealed.map((p) => p.id))}
                 className="group mt-6"
