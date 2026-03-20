@@ -93,6 +93,12 @@ const useGameStore = create(
   selectedMap: null,
   matchWinner: null,
 
+  // Wheel of Fortune (Atje Trekken)
+  wheelEverShown: false,      // Has wheel ever appeared? (controls button visibility)
+  wheelPending: false,        // Should wheel trigger on next bracket view?
+  wheelConsecutive: 0,        // How many times in a row wheel appeared
+  wheelMatchesSinceShow: 0,   // Matches since last wheel show
+
   // Audio
   audioResetTick: 0,
   hasSeenIntro: false,
@@ -563,14 +569,48 @@ const useGameStore = create(
   // NEXT MATCH → back to tournament overview
   // ============================================
   nextMatch: () =>
-    set(() => ({
-      gamePhase: 'tournament_overview',
-      selectedMap: null,
-      matchWinner: null,
-      bgmState: 'playing',
-      currentTrack: 'theme',
-      currentMatch: { player1: null, player2: null, p1Damage: 0, p2Damage: 0, activeQuestion: null, isFinal: false },
-    })),
+    set((state) => {
+      const matchesPlayed = state.completedMatches.length;
+      const { wheelConsecutive, wheelEverShown, wheelMatchesSinceShow } = state;
+
+      // Wheel trigger rules:
+      // 1. Never after match 1 (matchesPlayed === 1)
+      // 2. Must appear after match 2 or 3 (guaranteed, random)
+      // 3. Never more than 3 in a row
+      // 4. After that: random (~35% chance)
+      let triggerWheel = false;
+
+      if (matchesPlayed >= 2) {
+        if (!wheelEverShown) {
+          // First appearance: guaranteed after match 2 or 3
+          if (matchesPlayed === 2) {
+            triggerWheel = Math.random() < 0.5; // 50% chance after match 2
+          }
+          if (matchesPlayed >= 3 && !triggerWheel) {
+            triggerWheel = true; // Guaranteed by match 3
+          }
+        } else if (wheelConsecutive >= 3) {
+          // Max 3 in a row — skip
+          triggerWheel = false;
+        } else {
+          // Random ~35% chance
+          triggerWheel = Math.random() < 0.35;
+        }
+      }
+
+      return {
+        gamePhase: 'tournament_overview',
+        selectedMap: null,
+        matchWinner: null,
+        bgmState: 'playing',
+        currentTrack: 'theme',
+        currentMatch: { player1: null, player2: null, p1Damage: 0, p2Damage: 0, activeQuestion: null, isFinal: false },
+        wheelPending: triggerWheel,
+        wheelConsecutive: triggerWheel ? wheelConsecutive + 1 : 0,
+        wheelEverShown: wheelEverShown || triggerWheel,
+        wheelMatchesSinceShow: triggerWheel ? 0 : wheelMatchesSinceShow + 1,
+      };
+    }),
 
   goBack: () =>
     set((state) => {
@@ -616,6 +656,10 @@ const useGameStore = create(
       askedQuestionIds: [],
       bgmState: 'paused',
       currentTrack: 'theme',
+      wheelEverShown: false,
+      wheelPending: false,
+      wheelConsecutive: 0,
+      wheelMatchesSinceShow: 0,
     })),
   }),
   {
@@ -623,7 +667,7 @@ const useGameStore = create(
     partialize: (state) =>
       Object.fromEntries(
         Object.entries(state).filter(
-          ([key]) => !['bgmState', 'isMusicPlaying', 'hasSeenIntro'].includes(key)
+          ([key]) => !['bgmState', 'isMusicPlaying', 'hasSeenIntro', 'wheelPending'].includes(key)
         )
       ),
   }
