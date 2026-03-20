@@ -91,7 +91,8 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, []);
 
-  const displayOffset = spinning || winner ? offset : 0;
+  // Start offset shifted by 1 step so the peek card appears ABOVE center
+  const displayOffset = spinning || winner ? offset : step;
   const viewportHeight = step * 3;
 
   return (
