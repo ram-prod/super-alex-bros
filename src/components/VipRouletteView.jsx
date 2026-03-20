@@ -92,12 +92,13 @@ export default function VipRouletteView() {
           One lucky fighter gets an automatic bye to the next round! 👑
         </motion.p>
 
-        {/* Slot machine */}
+        {/* Slot machine — min-h prevents layout jump when transitioning to reveal */}
         <AnimatePresence mode="wait">
           {(phase === 'intro' || phase === 'spinning') && (
             <motion.div
               key="slot"
-              className="flex justify-center mb-8"
+              className="flex justify-center items-center mb-8"
+              style={{ minHeight: '580px' }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9 }}
@@ -118,7 +119,8 @@ export default function VipRouletteView() {
           {phase === 'reveal' && winner && (
             <motion.div
               key="reveal"
-              className="mb-8 space-y-4"
+              className="mb-8 space-y-4 flex flex-col items-center"
+              style={{ minHeight: '580px', justifyContent: 'center' }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}

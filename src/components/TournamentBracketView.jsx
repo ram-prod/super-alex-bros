@@ -155,7 +155,8 @@ function WildcardRoulette({ candidates, players, onComplete }) {
 
         <AnimatePresence mode="wait">
           {(phase === 'intro' || phase === 'spinning') && (
-            <motion.div key="slot" className="flex justify-center mb-8"
+            <motion.div key="slot" className="flex justify-center items-center mb-8"
+              style={{ minHeight: '520px' }}
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.4 }}>
               <SlotReel
@@ -170,7 +171,7 @@ function WildcardRoulette({ candidates, players, onComplete }) {
           )}
 
           {phase === 'reveal' && (
-            <motion.div key="reveal" className="mb-8 space-y-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
+            <motion.div key="reveal" className="mb-8 space-y-4 flex flex-col items-center" style={{ minHeight: '520px', justifyContent: 'center' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
               <div className="text-purple-400 text-xs uppercase tracking-widest font-bold mb-3">
                 {revealed.length === 1 ? '🃏 The Wildcard Is...' : '🃏 The Wildcards Are...'}
               </div>
