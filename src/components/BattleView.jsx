@@ -34,11 +34,20 @@ const CharacterSprite = forwardRef(function CharacterSprite({ player, side, batt
   const containerRef = useRef(null);
 
   useImperativeHandle(ref, () => ({
-    getCenter: () => {
+    getBounds: () => {
       const el = containerRef.current;
       if (!el) return null;
       const rect = el.getBoundingClientRect();
-      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      return {
+        cx: rect.left + rect.width / 2,
+        cy: rect.top + rect.height / 2,
+        width: rect.width,
+        height: rect.height,
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        bottom: rect.bottom,
+      };
     },
   }));
 
@@ -174,24 +183,23 @@ function Projectile({ startPos, endPos, onComplete }) {
   if (!startPos || !endPos) return null;
 
   const dx = Math.abs(endPos.x - startPos.x);
-  // Arc height: proportional to horizontal distance, nice visible arc
-  const arcHeight = Math.max(120, Math.min(dx * 0.5, 350));
+  // Arc height: proportional to horizontal distance, slightly elevated toss
+  const arcHeight = Math.max(140, Math.min(dx * 0.55, 380));
   // Duration: consistent throw speed
   const duration = Math.max(0.9, Math.min(1.4, dx / 500));
   // Vertical midpoint between characters (they're roughly same height)
   const midY = (startPos.y + endPos.y) / 2;
 
   return (
-    /* Layer 1: horizontal position — moves left to right (or right to left) */
+    /* Layer 1: horizontal movement + z-index transition (behind → in front of characters) */
     <motion.div
-      className="fixed z-30 pointer-events-none"
-      style={{
-        left: startPos.x,
-        top: midY,
-        transform: 'translate(-50%, -50%)',
+      className="fixed pointer-events-none"
+      style={{ left: startPos.x, top: midY, transform: 'translate(-50%, -50%)', zIndex: 5 }}
+      animate={{ left: endPos.x, zIndex: [5, 5, 30, 30] }}
+      transition={{
+        left: { duration, ease: 'linear' },
+        zIndex: { duration, times: [0, 0.15, 0.16, 1] },
       }}
-      animate={{ left: endPos.x }}
-      transition={{ left: { duration, ease: 'linear' } }}
       onAnimationComplete={onComplete}
     >
       {/* Layer 2: vertical arc — parabolic toss up then gravity down */}
@@ -352,11 +360,31 @@ export default function BattleView() {
     // Capture character positions at throw moment
     const winnerRef = loserIsP1 ? p2Ref : p1Ref;
     const loserRef = loserIsP1 ? p1Ref : p2Ref;
-    const startPos = winnerRef.current?.getCenter?.();
-    const endPos = loserRef.current?.getCenter?.();
-    if (startPos && endPos) {
-      setProjectileCoords({ start: startPos, end: endPos });
-      setHitTargetPos(endPos);
+    const throwerBounds = winnerRef.current?.getBounds?.();
+    const receiverBounds = loserRef.current?.getBounds?.();
+    if (throwerBounds && receiverBounds) {
+      // Thrower: "behind" = away from center, shoulder height (~30% from top)
+      const throwBehindX = winnerSide === 'left'
+        ? throwerBounds.cx - throwerBounds.width * 0.35  // behind = further left
+        : throwerBounds.cx + throwerBounds.width * 0.35; // behind = further right
+      const throwY = throwerBounds.top + throwerBounds.height * 0.25; // shoulder height
+
+      // Receiver: "front" = side facing thrower, chest height (~35% from top)
+      const receiveFrontX = loserSide === 'left'
+        ? receiverBounds.cx + receiverBounds.width * 0.15  // front = right side (facing thrower on right)
+        : receiverBounds.cx - receiverBounds.width * 0.15; // front = left side (facing thrower on left)
+      const receiveY = receiverBounds.top + receiverBounds.height * 0.35; // chest/upper body
+
+      // Splash: "behind" the receiver = away from thrower
+      const splashBehindX = loserSide === 'left'
+        ? receiverBounds.cx - receiverBounds.width * 0.2
+        : receiverBounds.cx + receiverBounds.width * 0.2;
+
+      setProjectileCoords({
+        start: { x: throwBehindX, y: throwY },
+        end: { x: receiveFrontX, y: receiveY },
+      });
+      setHitTargetPos({ x: splashBehindX, y: receiveY });
     }
 
     setPendingLoserId(loserId);
