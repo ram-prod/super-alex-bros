@@ -173,34 +173,36 @@ function DamageHUD({ player, damage, side }) {
 function Projectile({ startPos, endPos, onComplete }) {
   if (!startPos || !endPos) return null;
 
-  const dx = endPos.x - startPos.x;
-  const dy = endPos.y - startPos.y;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-  // Arc height proportional to distance (40%), capped for very wide screens
-  const arcHeight = Math.min(distance * 0.4, 300);
-  // Duration scales with distance for consistent perceived speed
-  const duration = Math.max(0.8, Math.min(1.5, distance / 600));
+  const dx = Math.abs(endPos.x - startPos.x);
+  // Arc height: proportional to horizontal distance, nice visible arc
+  const arcHeight = Math.max(120, Math.min(dx * 0.5, 350));
+  // Duration: consistent throw speed
+  const duration = Math.max(0.9, Math.min(1.4, dx / 500));
+  // Vertical midpoint between characters (they're roughly same height)
+  const midY = (startPos.y + endPos.y) / 2;
 
   return (
     <motion.div
       className="fixed z-30 text-5xl sm:text-6xl pointer-events-none"
-      style={{ left: startPos.x, top: startPos.y, transform: 'translate(-50%, -50%)' }}
+      style={{
+        left: startPos.x,
+        top: midY,
+        transform: 'translate(-50%, -50%)',
+      }}
       animate={{
         left: endPos.x,
-        top: endPos.y,
         rotate: [0, 360, 720],
       }}
       transition={{
         left: { duration, ease: 'linear' },
-        top: { duration, ease: 'linear' },
         rotate: { duration, ease: 'linear' },
       }}
       onAnimationComplete={onComplete}
     >
-      {/* The beer follows a parabolic arc via a nested y-offset div */}
+      {/* Parabolic arc: up then down — classic beer toss arc */}
       <motion.div
         animate={{ y: [0, -arcHeight, 0] }}
-        transition={{ duration, ease: 'easeInOut' }}
+        transition={{ duration, ease: [0.2, 0, 0.8, 1] }}
       >
         🍺
       </motion.div>
