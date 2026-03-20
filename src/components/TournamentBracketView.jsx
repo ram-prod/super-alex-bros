@@ -55,8 +55,8 @@ function PlayerSlot({ player, placeholder, isWinner, isVip, isWildcard, s }) {
     }`}>
       <CharacterThumb charId={charId} size={s.thumb} emojiSize={s.emoji} />
       <span className={`${s.name} truncate`}>{player.name}</span>
-      {isVip && <span className="text-xs text-yellow-400 ml-auto">👑</span>}
-      {isWildcard && <span className="text-xs text-purple-400 ml-auto">🃏</span>}
+      {isVip && <span className={`${s.emoji} text-yellow-400 ml-auto leading-none`}>👑</span>}
+      {isWildcard && <span className={`${s.emoji} text-purple-400 ml-auto leading-none`}>🃏</span>}
       {isWinner && <span className="ml-auto text-green-400 text-sm">✓</span>}
     </div>
   );
