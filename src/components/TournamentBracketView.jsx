@@ -113,32 +113,47 @@ function VipBadge({ player, s }) {
 // =============================================
 function WildcardRoulette({ candidates, players, onComplete }) {
   const [phase, setPhase] = useState('intro');
-  const [revealed, setRevealed] = useState([]);
-  const [slotWinner, setSlotWinner] = useState(null);
+  const [winners, setWinners] = useState([]);
+  // Track which reel index should start landing — sequential with delay
+  const [landingIdx, setLandingIdx] = useState(-1);
+  const [landedCount, setLandedCount] = useState(0);
 
   const candidatePlayers = candidates.map((id) => players.find((p) => p.id === id)).filter(Boolean);
+  const wildcardCount = useGameStore.getState().bracketConfig?.wildcards || 1;
 
+  // Dynamically size reels based on count
+  const reelSize = wildcardCount >= 3 ? 130 : wildcardCount >= 2 ? 150 : 160;
+
+  // Pick winners after 2s of spinning, then start sequential landing
   useEffect(() => {
-    if (phase !== 'spinning' || slotWinner) return;
+    if (phase !== 'spinning' || winners.length > 0) return;
     const timeout = setTimeout(() => {
       const shuffled = [...candidatePlayers].sort(() => Math.random() - 0.5);
-      const count = useGameStore.getState().bracketConfig?.wildcards || 1;
-      const winners = shuffled.slice(0, count);
-      setSlotWinner(winners[0]);
-      setRevealed(winners);
+      const picked = shuffled.slice(0, wildcardCount);
+      setWinners(picked);
+      // Start first reel landing
+      setLandingIdx(0);
     }, 2000);
     return () => clearTimeout(timeout);
-  }, [phase, slotWinner, candidatePlayers.length]);
+  }, [phase, winners.length, candidatePlayers.length, wildcardCount]);
 
-  const handleLanded = () => {
-    setTimeout(() => setPhase('reveal'), 400);
+  // Sequential landing: when a reel lands, trigger the next one after a delay
+  const handleReelLanded = (idx) => {
+    setLandedCount((prev) => prev + 1);
+    if (idx < wildcardCount - 1) {
+      // Trigger next reel landing after 600ms
+      setTimeout(() => setLandingIdx(idx + 1), 600);
+    } else {
+      // All reels landed → reveal after brief pause
+      setTimeout(() => setPhase('reveal'), 600);
+    }
   };
 
   return (
     <motion.div className="absolute inset-0 z-40 flex flex-col items-center justify-center px-6"
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
       <div className="absolute inset-0 bg-black/85 backdrop-blur-sm" />
-      <div className="relative z-10 text-center max-w-lg">
+      <div className="relative z-10 text-center max-w-4xl w-full">
         <motion.h1
           className="text-5xl sm:text-6xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 mb-4 -skew-x-6"
           style={{ filter: 'drop-shadow(0 4px 0 rgba(0,0,0,0.6))' }}
@@ -150,34 +165,36 @@ function WildcardRoulette({ candidates, players, onComplete }) {
         <motion.p className="text-sm sm:text-base font-bold uppercase tracking-widest text-gray-300 drop-shadow-md mb-8" initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           {candidates.length} fighters have fallen. Only <span className="text-purple-300 font-bold">
-          {useGameStore.getState().bracketConfig?.wildcards || 2}</span> will be resurrected.
+          {wildcardCount}</span> will be resurrected.
         </motion.p>
 
         <AnimatePresence mode="wait">
           {(phase === 'intro' || phase === 'spinning') && (
-            <motion.div key="slot" className="flex justify-center items-center mb-8"
+            <motion.div key="slot" className="flex justify-center items-center gap-6 sm:gap-8 mb-8"
               style={{ minHeight: '520px' }}
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.4 }}>
-              <SlotReel
-                candidates={candidatePlayers}
-                spinning={phase === 'spinning'}
-                winner={slotWinner}
-                accentColor="purple"
-                size={160}
-                onLanded={handleLanded}
-              />
+              {Array.from({ length: wildcardCount }).map((_, i) => (
+                <SlotReel
+                  key={i}
+                  candidates={candidatePlayers}
+                  spinning={phase === 'spinning'}
+                  winner={landingIdx >= i ? winners[i] || null : null}
+                  accentColor="purple"
+                  size={reelSize}
+                  onLanded={() => handleReelLanded(i)}
+                />
+              ))}
             </motion.div>
           )}
 
           {phase === 'reveal' && (
             <motion.div key="reveal" className="mb-8 space-y-4 flex flex-col items-center" style={{ minHeight: '520px', justifyContent: 'center' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
               <div className="text-purple-400 text-xs uppercase tracking-widest font-bold mb-3">
-                {revealed.length === 1 ? '🃏 The Wildcard Is...' : '🃏 The Wildcards Are...'}
+                {winners.length === 1 ? '🃏 The Wildcard Is...' : '🃏 The Wildcards Are...'}
               </div>
               <div className="flex justify-center gap-4">
-                {revealed.map((p, i) => {
-                  const charData = players.find((pl) => pl.id === p.id);
+                {winners.map((p, i) => {
                   const cData = useGameStore.getState().characters.find((c) => c.id === p.chosenCharacter);
                   return (
                     <motion.div key={p.id}
@@ -201,7 +218,7 @@ function WildcardRoulette({ candidates, players, onComplete }) {
                   );
                 })}
               </div>
-              <motion.button onClick={() => onComplete(revealed.map((p) => p.id))}
+              <motion.button onClick={() => onComplete(winners.map((p) => p.id))}
                 className="group mt-6"
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5 }}
                 whileHover={{ scale: 1.05 }}
