@@ -7,14 +7,12 @@ const FIGHTER_EMOJI = {
 };
 
 /**
- * Casino slot reel. Cards scroll vertically, center card highlighted by a fixed frame.
- * No visible container — cards fade to full transparency outside center.
- * Deceleration lands smoothly on winner without sudden jumps.
+ * Casino slot reel. No visible container — uses CSS mask-image for seamless fade.
+ * Scrolls top-to-bottom. Decelerates smoothly to land on winner.
  */
 export default function SlotReel({ candidates, spinning, winner, accentColor = 'yellow', size = 180, onLanded }) {
   const [offset, setOffset] = useState(0);
   const offsetRef = useRef(0);
-  const speedRef = useRef(0);
   const rafRef = useRef(null);
   const landedRef = useRef(false);
   const characters = useGameStore((s) => s.characters);
@@ -29,54 +27,48 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
 
   const extended = [...candidates, ...candidates, ...candidates];
 
-  // Keep offsetRef in sync
   useEffect(() => { offsetRef.current = offset; }, [offset]);
 
   const tick = useCallback(() => {
-    const newOffset = (offsetRef.current + speedRef.current) % totalHeight;
+    // Negative direction = scrolls top-to-bottom visually
+    const newOffset = (offsetRef.current + 18) % totalHeight;
     offsetRef.current = newOffset;
     setOffset(newOffset);
     rafRef.current = requestAnimationFrame(tick);
   }, [totalHeight]);
 
-  // Start spinning at constant speed
+  // Start spinning
   useEffect(() => {
     if (spinning && !winner) {
       landedRef.current = false;
-      speedRef.current = 18;
       rafRef.current = requestAnimationFrame(tick);
       return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
     }
   }, [spinning, winner, tick]);
 
-  // Decelerate and land exactly on winner
+  // Decelerate and land on winner
   useEffect(() => {
     if (!winner || !spinning || landedRef.current) return;
 
     const winnerIdx = candidates.findIndex((p) => p.id === winner.id);
     const targetOffset = winnerIdx * step;
 
-    // Calculate how far we need to travel: at least 2 full rotations + distance to target
     const currentOff = offsetRef.current;
     let distance = targetOffset - currentOff;
-    // Ensure we go forward at least 2 full cycles for dramatic effect
     while (distance < totalHeight * 2) distance += totalHeight;
 
-    // Ease-out deceleration over the calculated distance
-    const totalFrames = 120; // ~2 seconds at 60fps
+    const totalFrames = 120;
     let frame = 0;
 
     const decelerate = () => {
       frame++;
       const progress = frame / totalFrames;
-      // Ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       const newOffset = (currentOff + distance * eased) % totalHeight;
       offsetRef.current = newOffset;
       setOffset(newOffset);
 
       if (frame >= totalFrames) {
-        // Snap exactly to target
         offsetRef.current = targetOffset;
         setOffset(targetOffset);
         landedRef.current = true;
@@ -88,7 +80,6 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
 
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(decelerate);
-
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [winner, spinning, candidates, step, totalHeight, onLanded]);
 
@@ -101,26 +92,28 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
 
   return (
     <div className="relative flex flex-col items-center" style={{ width: `${size + 8}px`, height: `${viewportHeight}px` }}>
-      {/* Scrolling cards */}
-      <div className="absolute inset-0 overflow-hidden" style={{ background: 'transparent' }}>
+      {/*
+        Masked container — CSS mask-image fades ALL edges (top, bottom, AND sides)
+        to transparent. No hard clip edges visible against any background.
+      */}
+      <div
+        className="absolute inset-0"
+        style={{
+          maskImage: `
+            linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%)
+          `,
+          WebkitMaskImage: `
+            linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%)
+          `,
+          overflow: 'hidden',
+        }}
+      >
         <div
           className="absolute left-1 right-1"
           style={{ transform: `translateY(${-displayOffset + step}px)` }}
         >
           {extended.map((player, i) => {
             const charData = characters.find((c) => c.id === player.chosenCharacter);
-            const itemPos = i * step;
-            const distFromCenter = Math.abs(itemPos - displayOffset);
-            const distWrapped = Math.min(distFromCenter, Math.abs(distFromCenter - totalHeight));
-            const isCenter = distWrapped < step * 0.5;
-            const isNear = distWrapped < step * 1.2;
-
-            // Cards outside viewport are fully invisible — prevents dark column
-            if (!isCenter && !isNear) {
-              return (
-                <div key={`${player.id}-${i}`} style={{ height: `${itemHeight}px`, marginBottom: `${gap}px` }} />
-              );
-            }
 
             return (
               <div
@@ -129,9 +122,6 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
                 style={{
                   height: `${itemHeight}px`,
                   marginBottom: `${gap}px`,
-                  opacity: isCenter ? 1 : 0.25,
-                  transform: `scale(${isCenter ? 1 : 0.8})`,
-                  filter: isCenter ? 'none' : 'blur(3px)',
                 }}
               >
                 <div className="relative rounded-xl overflow-hidden w-full h-full">
@@ -158,13 +148,7 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
         </div>
       </div>
 
-      {/* Soft edge fades — match the page overlay (bg-black/85) */}
-      <div className="absolute top-0 left-0 right-0 h-[38%] pointer-events-none z-10"
-        style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0) 100%)' }} />
-      <div className="absolute bottom-0 left-0 right-0 h-[38%] pointer-events-none z-10"
-        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0) 100%)' }} />
-
-      {/* FIXED highlight frame */}
+      {/* FIXED highlight frame — centered, doesn't move */}
       <div
         className={`absolute z-20 pointer-events-none border-2 ${borderClass} rounded-xl`}
         style={{
