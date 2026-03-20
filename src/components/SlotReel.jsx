@@ -110,7 +110,7 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
       >
         <div
           className="absolute left-1 right-1"
-          style={{ transform: `translateY(${-displayOffset + step}px)` }}
+          style={{ transform: `translateY(${displayOffset + step}px)` }}
         >
           {extended.map((player, i) => {
             const charData = characters.find((c) => c.id === player.chosenCharacter);
