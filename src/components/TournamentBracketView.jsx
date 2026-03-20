@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
 import BackButton from './BackButton';
 import CharacterThumb from './CharacterThumb';
+import SlotReel from './SlotReel';
 
 const FIGHTER_EMOJI = {
   ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
@@ -112,27 +113,23 @@ function VipBadge({ player, s }) {
 // =============================================
 function WildcardRoulette({ candidates, players, onComplete }) {
   const [phase, setPhase] = useState('intro');
-  const [displayIdx, setDisplayIdx] = useState(0);
   const [revealed, setRevealed] = useState([]);
+  const [slotWinner, setSlotWinner] = useState(null);
 
   const candidatePlayers = candidates.map((id) => players.find((p) => p.id === id)).filter(Boolean);
 
   useEffect(() => {
     if (phase !== 'spinning') return;
-    const interval = setInterval(() => {
-      setDisplayIdx((i) => (i + 1) % candidatePlayers.length);
-    }, 100);
     const timeout = setTimeout(() => {
-      clearInterval(interval);
       const shuffled = [...candidatePlayers].sort(() => Math.random() - 0.5);
       const count = useGameStore.getState().bracketConfig?.wildcards || 1;
-      setRevealed(shuffled.slice(0, count));
-      setPhase('reveal');
-    }, 3000);
-    return () => { clearInterval(interval); clearTimeout(timeout); };
+      const winners = shuffled.slice(0, count);
+      setSlotWinner(winners[0]); // Slot lands on first wildcard
+      setRevealed(winners);
+      setTimeout(() => setPhase('reveal'), 1800);
+    }, 2500);
+    return () => clearTimeout(timeout);
   }, [phase, candidatePlayers.length]);
-
-  const currentDisplay = candidatePlayers[displayIdx];
 
   return (
     <motion.div className="absolute inset-0 z-40 flex flex-col items-center justify-center px-6"
@@ -153,19 +150,23 @@ function WildcardRoulette({ candidates, players, onComplete }) {
           {useGameStore.getState().bracketConfig?.wildcards || 2}</span> will be resurrected.
         </motion.p>
 
-        {phase === 'spinning' && currentDisplay && (
-          <motion.div className="mb-8">
-            <motion.div key={displayIdx} className="text-6xl mb-2" initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.05 }}>
-              <CharacterThumb charId={currentDisplay.chosenCharacter} size="w-16 h-16" emojiSize="text-6xl" rounded={false} />
+        <AnimatePresence mode="wait">
+          {(phase === 'intro' || phase === 'spinning') && (
+            <motion.div key="slot" className="flex justify-center mb-8"
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.4 }}>
+              <SlotReel
+                candidates={candidatePlayers}
+                spinning={phase === 'spinning'}
+                winner={slotWinner}
+                accentColor="purple"
+                itemHeight={90}
+              />
             </motion.div>
-            <div className="text-xl font-black text-white">{currentDisplay.name}</div>
-          </motion.div>
-        )}
+          )}
 
-        <AnimatePresence>
           {phase === 'reveal' && (
-            <motion.div className="mb-8 space-y-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+            <motion.div key="reveal" className="mb-8 space-y-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
               <div className="text-purple-400 text-xs uppercase tracking-widest font-bold mb-3">
                 {revealed.length === 1 ? '🃏 The Wildcard Is...' : '🃏 The Wildcards Are...'}
               </div>
@@ -174,17 +175,17 @@ function WildcardRoulette({ candidates, players, onComplete }) {
                   <motion.div key={p.id}
                     className="bg-purple-500/10 border-2 border-purple-400/50 rounded-xl p-4 text-center min-w-[120px]"
                     initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: 'tween', ease: 'easeOut', duration: 0.3, delay: 0.5 + i * 0.4 }}
+                    transition={{ type: 'tween', ease: 'easeOut', duration: 0.3, delay: 0.3 + i * 0.4 }}
                     style={{ boxShadow: '0 0 25px rgba(168,85,247,0.2)' }}>
-                    <div className="mb-1 flex justify-center"><CharacterThumb charId={p.chosenCharacter} size="w-12 h-12" emojiSize="text-4xl" rounded={false} /></div>
-                    <div className="text-white font-black">{p.name}</div>
+                    <div className="mb-1 flex justify-center"><CharacterThumb charId={p.chosenCharacter} size="w-14 h-14" emojiSize="text-4xl" rounded={false} /></div>
+                    <div className="text-white font-black text-lg">{p.name}</div>
                     <div className="text-purple-300 text-[10px] font-bold mt-1">RESURRECTED 🃏</div>
                   </motion.div>
                 ))}
               </div>
               <motion.button onClick={() => onComplete(revealed.map((p) => p.id))}
                 className="group mt-6"
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.8 }}
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}>
                 <div className="px-8 py-3 border-2 border-purple-400/50 bg-gradient-to-r from-purple-600/30 to-pink-600/30 rounded-sm group-hover:border-purple-300 group-hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] transition-all duration-200"
@@ -199,7 +200,7 @@ function WildcardRoulette({ candidates, players, onComplete }) {
         </AnimatePresence>
 
         {phase === 'intro' && (
-          <>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
             <motion.button onClick={() => setPhase('spinning')}
               className="group"
               animate={{ scale: [1, 1.03, 1] }}
@@ -212,16 +213,7 @@ function WildcardRoulette({ candidates, players, onComplete }) {
                 </div>
               </div>
             </motion.button>
-            <motion.div className="mt-6 flex flex-wrap justify-center gap-2"
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-              {candidatePlayers.map((p) => (
-                <div key={p.id} className="flex items-center gap-1.5 px-2 py-1 rounded bg-gray-800/50 border border-gray-700/30">
-                  <CharacterThumb charId={p.chosenCharacter} size="w-5 h-5" emojiSize="text-sm" />
-                  <span className="text-xs text-gray-300 font-bold">{p.name}</span>
-                </div>
-              ))}
-            </motion.div>
-          </>
+          </motion.div>
         )}
       </div>
     </motion.div>
