@@ -49,8 +49,8 @@ export default function WheelOfFortune({ onClose }) {
   const count = players.length;
   const segmentAngle = 360 / count;
 
-  // Wheel sizing
-  const size = 340;
+  // Wheel sizing — large enough to see faces clearly on TV
+  const size = 420;
   const cx = size / 2;
   const cy = size / 2;
   const radius = size / 2 - 8;
@@ -182,10 +182,10 @@ export default function WheelOfFortune({ onClose }) {
                     {/* Circular clip paths for portraits */}
                     {players.map((_, i) => {
                       const midAngle = i * segmentAngle + segmentAngle / 2;
-                      const pos = polarToCartesian(cx, cy, radius * 0.62, midAngle);
+                      const pos = polarToCartesian(cx, cy, radius * 0.6, midAngle);
                       return (
                         <clipPath key={`clip-${i}`} id={`portrait-clip-${i}`}>
-                          <circle cx={pos.x} cy={pos.y} r={20} />
+                          <circle cx={pos.x} cy={pos.y} r={28} />
                         </clipPath>
                       );
                     })}
@@ -198,13 +198,9 @@ export default function WheelOfFortune({ onClose }) {
                     const color = FIGHTER_COLORS[player.chosenCharacter] || '#666';
                     const charData = characters.find((c) => c.id === player.chosenCharacter);
 
-                    // Position for portrait/emoji — slightly outward from center
-                    const labelRadius = radius * 0.62;
+                    // Position for portrait/emoji — centered in segment
+                    const labelRadius = radius * 0.6;
                     const labelPos = polarToCartesian(cx, cy, labelRadius, midAngle);
-
-                    // Position for name — near the edge
-                    const nameRadius = radius * 0.88;
-                    const namePos = polarToCartesian(cx, cy, nameRadius, midAngle);
 
                     return (
                       <g key={i}>
@@ -223,43 +219,40 @@ export default function WheelOfFortune({ onClose }) {
                           stroke="none"
                         />
 
-                        {/* Portrait image or emoji */}
+                        {/* Portrait image or emoji — no names, just faces */}
                         {charData?.portrait ? (
-                          <image
-                            href={`/assets/characters/${charData.portrait}`}
-                            x={labelPos.x - 22}
-                            y={labelPos.y - 22}
-                            width="44"
-                            height="44"
-                            clipPath={`url(#portrait-clip-${i})`}
-                            preserveAspectRatio="xMidYMid slice"
-                          />
+                          <>
+                            <image
+                              href={`/assets/characters/${charData.portrait}`}
+                              x={labelPos.x - 28}
+                              y={labelPos.y - 28}
+                              width="56"
+                              height="56"
+                              clipPath={`url(#portrait-clip-${i})`}
+                              preserveAspectRatio="xMidYMid slice"
+                            />
+                            {/* Subtle border ring around portrait */}
+                            <circle
+                              cx={labelPos.x}
+                              cy={labelPos.y}
+                              r={28}
+                              fill="none"
+                              stroke={color}
+                              strokeWidth="2"
+                              opacity="0.7"
+                            />
+                          </>
                         ) : (
                           <text
                             x={labelPos.x}
                             y={labelPos.y}
                             textAnchor="middle"
                             dominantBaseline="central"
-                            fontSize="24"
+                            fontSize="28"
                           >
                             {FIGHTER_EMOJI[player.chosenCharacter] || '❓'}
                           </text>
                         )}
-
-                        {/* Player name — rotated along the segment */}
-                        <text
-                          x={namePos.x}
-                          y={namePos.y}
-                          textAnchor="middle"
-                          dominantBaseline="central"
-                          fill="white"
-                          fontSize="9"
-                          fontWeight="bold"
-                          style={{ textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}
-                          transform={`rotate(${midAngle}, ${namePos.x}, ${namePos.y})`}
-                        >
-                          {player.name}
-                        </text>
                       </g>
                     );
                   })}
@@ -386,7 +379,7 @@ export default function WheelOfFortune({ onClose }) {
                 transition={{ delay: 0.6 }}
                 style={{ filter: 'drop-shadow(0 3px 0 rgba(0,0,0,0.5))' }}
               >
-                🍺 MOET EEN ATJE TREKKEN! 🍺
+                🍺 HAS TO CHUG A BEER! 🍺
               </motion.p>
 
               {/* Close button */}
