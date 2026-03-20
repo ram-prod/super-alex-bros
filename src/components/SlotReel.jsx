@@ -25,15 +25,13 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
   const glowColor = accentColor === 'purple' ? 'rgba(168,85,247,0.5)' : 'rgba(250,204,21,0.5)';
   const borderClass = accentColor === 'purple' ? 'border-purple-400/80' : 'border-yellow-400/80';
 
-  // Reversed order so visual scroll direction is top-to-bottom
-  const reversed = [...candidates].reverse();
-  const extended = [...reversed, ...reversed, ...reversed];
+  const extended = [...candidates, ...candidates, ...candidates];
 
   useEffect(() => { offsetRef.current = offset; }, [offset]);
 
   const tick = useCallback(() => {
-    // Negative direction = scrolls top-to-bottom visually
-    const newOffset = (offsetRef.current + 18) % totalHeight;
+    // Decrease offset → -displayOffset increases → strip moves down → top-to-bottom scroll
+    const newOffset = (offsetRef.current - 18 + totalHeight) % totalHeight;
     offsetRef.current = newOffset;
     setOffset(newOffset);
     rafRef.current = requestAnimationFrame(tick);
@@ -52,11 +50,12 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
   useEffect(() => {
     if (!winner || !spinning || landedRef.current) return;
 
-    const winnerIdx = reversed.findIndex((p) => p.id === winner.id);
+    const winnerIdx = candidates.findIndex((p) => p.id === winner.id);
     const targetOffset = winnerIdx * step;
 
     const currentOff = offsetRef.current;
-    let distance = targetOffset - currentOff;
+    // Distance to travel backwards (decreasing offset) — at least 2 full rotations
+    let distance = currentOff - targetOffset;
     while (distance < totalHeight * 2) distance += totalHeight;
 
     const totalFrames = 120;
@@ -66,7 +65,8 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
       frame++;
       const progress = frame / totalFrames;
       const eased = 1 - Math.pow(1 - progress, 3);
-      const newOffset = (currentOff + distance * eased) % totalHeight;
+      // Subtract: going backwards through the reel
+      const newOffset = (currentOff - distance * eased + totalHeight * 100) % totalHeight;
       offsetRef.current = newOffset;
       setOffset(newOffset);
 
