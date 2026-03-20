@@ -6,6 +6,23 @@ const FIGHTER_EMOJI = {
   frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
 };
 
+function FighterImage({ player, side, characters }) {
+  const charId = player?.chosenCharacter;
+  const charData = characters.find((c) => c.id === charId);
+  const isLeft = side === 'left';
+  if (charData?.body) {
+    return (
+      <img
+        src={`/assets/characters/${charData.body}`}
+        alt={player?.name}
+        className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 object-contain drop-shadow-[0_0_15px_rgba(0,0,0,0.8)]"
+        style={{ transform: isLeft ? 'none' : 'scaleX(-1)' }}
+      />
+    );
+  }
+  return <span className="text-7xl sm:text-8xl">{FIGHTER_EMOJI[charId] || '❓'}</span>;
+}
+
 export default function VsScreenView() {
   const { currentMatch, startBattle, characters } = useGameStore();
   const { player1, player2 } = currentMatch;
@@ -89,11 +106,11 @@ export default function VsScreenView() {
             transition={{ type: 'spring', stiffness: 80, damping: 14, duration: 1.2 }}
           >
             <motion.div
-              className="text-7xl sm:text-8xl mb-4"
+              className="mb-4"
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              {FIGHTER_EMOJI[player1?.chosenCharacter] || '❓'}
+              <FighterImage player={player1} side="left" characters={characters} />
             </motion.div>
             <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full font-mono mb-1 inline-block">P{player1?.id}</span>
             <div className="text-3xl sm:text-4xl font-black text-white mb-1 drop-shadow-lg">
@@ -138,11 +155,11 @@ export default function VsScreenView() {
             transition={{ type: 'spring', stiffness: 80, damping: 14, duration: 1.2 }}
           >
             <motion.div
-              className="text-7xl sm:text-8xl mb-4"
+              className="mb-4"
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
             >
-              {FIGHTER_EMOJI[player2?.chosenCharacter] || '❓'}
+              <FighterImage player={player2} side="right" characters={characters} />
             </motion.div>
             <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full font-mono mb-1 inline-block">P{player2?.id}</span>
             <div className="text-3xl sm:text-4xl font-black text-white mb-1 drop-shadow-lg">

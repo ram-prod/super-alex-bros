@@ -1,33 +1,141 @@
 {
   "characters": [
-    { "id": "ruggero", "name": "Ruggero" },
-    { "id": "koen", "name": "Koen" },
-    { "id": "matthew", "name": "Matthew" },
-    { "id": "martin", "name": "Martin" },
-    { "id": "robin", "name": "Robin" },
-    { "id": "frederik", "name": "Frederik" },
-    { "id": "vincent", "name": "Vincent" },
-    { "id": "devan", "name": "Devan" },
-    { "id": "gereon", "name": "Gereon" },
-    { "id": "noah", "name": "Noah" },
-    { "id": "alexander", "name": "Alexander (Bachelor)" }
+    {
+      "id": "ruggero",
+      "name": "Ruggero",
+      "portrait": null,
+      "body": null
+    },
+    {
+      "id": "koen",
+      "name": "Koen",
+      "portrait": null,
+      "body": null
+    },
+    {
+      "id": "matthew",
+      "name": "Matthew",
+      "portrait": "matthew-portrait.jpg",
+      "body": "matthew-body.png"
+    },
+    {
+      "id": "martin",
+      "name": "Martin",
+      "portrait": null,
+      "body": null
+    },
+    {
+      "id": "robin",
+      "name": "Robin",
+      "portrait": null,
+      "body": null
+    },
+    {
+      "id": "frederik",
+      "name": "Frederik",
+      "portrait": null,
+      "body": null
+    },
+    {
+      "id": "vincent",
+      "name": "Vincent",
+      "portrait": null,
+      "body": null
+    },
+    {
+      "id": "devan",
+      "name": "Devan",
+      "portrait": null,
+      "body": null
+    },
+    {
+      "id": "gereon",
+      "name": "Gereon",
+      "portrait": null,
+      "body": null
+    },
+    {
+      "id": "noah",
+      "name": "Noah",
+      "portrait": null,
+      "body": null
+    },
+    {
+      "id": "alexander",
+      "name": "Alexander (Bachelor)",
+      "portrait": null,
+      "body": null
+    }
   ],
   "maps": [
-    { "id": "amsterdam", "name": "Amsterdam Hotelschool" },
-    { "id": "dusseldorf", "name": "Düsseldorf Altstadt" },
-    { "id": "berlijn", "name": "Berlin Berghain" },
-    { "id": "luxembourg", "name": "Luxembourg Fortress" },
-    { "id": "barcelona", "name": "Barcelona Beach" },
-    { "id": "lissabon", "name": "Lisbon Viewpoint" },
-    { "id": "valencia", "name": "Valencia Marina" },
-    { "id": "nyc", "name": "New York Michelin Kitchen" },
-    { "id": "villa", "name": "The Bachelor Villa", "isSecret": true }
+    {
+      "id": "amsterdam",
+      "name": "Amsterdam Hotelschool"
+    },
+    {
+      "id": "dusseldorf",
+      "name": "D\u00fcsseldorf Altstadt"
+    },
+    {
+      "id": "berlijn",
+      "name": "Berlin Berghain"
+    },
+    {
+      "id": "luxembourg",
+      "name": "Luxembourg Fortress"
+    },
+    {
+      "id": "barcelona",
+      "name": "Barcelona Beach"
+    },
+    {
+      "id": "lissabon",
+      "name": "Lisbon Viewpoint"
+    },
+    {
+      "id": "valencia",
+      "name": "Valencia Marina"
+    },
+    {
+      "id": "nyc",
+      "name": "New York Michelin Kitchen"
+    },
+    {
+      "id": "villa",
+      "name": "The Bachelor Villa",
+      "isSecret": true
+    }
   ],
   "content": [
-    { "id": 1, "type": "trivia", "question": "What year was the original Smash Bros released?", "answer": "1999" },
-    { "id": 2, "type": "trivia", "question": "Who is the fastest character?", "answer": "Captain Falcon" },
-    { "id": 3, "type": "challenge", "question": "First to press the button wins!", "answer": null },
-    { "id": 4, "type": "trivia", "question": "How many characters in Smash 64?", "answer": "12" },
-    { "id": 5, "type": "challenge", "question": "Mash the button — highest count wins!", "answer": null }
+    {
+      "id": 1,
+      "type": "trivia",
+      "question": "What year was the original Smash Bros released?",
+      "answer": "1999"
+    },
+    {
+      "id": 2,
+      "type": "trivia",
+      "question": "Who is the fastest character?",
+      "answer": "Captain Falcon"
+    },
+    {
+      "id": 3,
+      "type": "challenge",
+      "question": "First to press the button wins!",
+      "answer": null
+    },
+    {
+      "id": 4,
+      "type": "trivia",
+      "question": "How many characters in Smash 64?",
+      "answer": "12"
+    },
+    {
+      "id": 5,
+      "type": "challenge",
+      "question": "Mash the button \u2014 highest count wins!",
+      "answer": null
+    }
   ]
 }

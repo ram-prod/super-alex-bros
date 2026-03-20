@@ -129,7 +129,14 @@ export default function VictoryView() {
               transition={{ type: 'tween', ease: 'easeOut', duration: 0.6 }}
               className="flex flex-col items-center"
             >
-              <div className="text-6xl mb-4">{FIGHTER_EMOJI[realWinner?.chosenCharacter] || '⭐'}</div>
+              <div className="mb-4">
+                {(() => {
+                  const cd = characters.find((c) => c.id === realWinner?.chosenCharacter);
+                  return cd?.body
+                    ? <img src={`/assets/characters/${cd.body}`} alt={realWinner?.name} className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-[0_0_15px_rgba(0,0,0,0.8)]" />
+                    : <span className="text-6xl">{FIGHTER_EMOJI[realWinner?.chosenCharacter] || '⭐'}</span>;
+                })()}
+              </div>
               <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full font-mono mb-2 inline-block">P{realWinner?.id}</span>
               <h2 className="text-5xl sm:text-6xl md:text-7xl font-black leading-tight"
                 style={{ filter: 'drop-shadow(0 6px 0 rgba(0,0,0,0.5))' }}>
@@ -161,17 +168,26 @@ export default function VictoryView() {
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}>
-                {!imgError ? (
-                  <img src={`/assets/characters/${realWinner?.chosenCharacter}.jpg`} alt={winnerCharName}
-                    onError={() => setImgError(true)}
-                    className="w-44 h-44 sm:w-60 sm:h-60 rounded-2xl object-cover border-4 shadow-lg"
-                    style={{ borderColor: winnerColor, boxShadow: `0 0 40px ${winnerColor}60` }} />
-                ) : (
-                  <div className="w-44 h-44 sm:w-60 sm:h-60 rounded-2xl border-4 flex items-center justify-center text-7xl"
+                {(() => {
+                  const cd = characters.find((c) => c.id === realWinner?.chosenCharacter);
+                  if (cd?.body && !imgError) {
+                    return <img src={`/assets/characters/${cd.body}`} alt={winnerCharName}
+                      onError={() => setImgError(true)}
+                      className="w-44 h-44 sm:w-60 sm:h-60 object-contain drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]"
+                      style={{ filter: `drop-shadow(0 0 15px ${winnerColor}60)` }} />;
+                  }
+                  if (!imgError) {
+                    const src = cd?.portrait ? `/assets/characters/${cd.portrait}` : `/assets/characters/${realWinner?.chosenCharacter}.jpg`;
+                    return <img src={src} alt={winnerCharName}
+                      onError={() => setImgError(true)}
+                      className="w-44 h-44 sm:w-60 sm:h-60 rounded-2xl object-cover border-4 shadow-lg"
+                      style={{ borderColor: winnerColor, boxShadow: `0 0 40px ${winnerColor}60` }} />;
+                  }
+                  return <div className="w-44 h-44 sm:w-60 sm:h-60 rounded-2xl border-4 flex items-center justify-center text-7xl"
                     style={{ borderColor: winnerColor, backgroundColor: `${winnerColor}15`, boxShadow: `0 0 40px ${winnerColor}60` }}>
                     {FIGHTER_EMOJI[realWinner?.chosenCharacter] || '⭐'}
-                  </div>
-                )}
+                  </div>;
+                })()}
                 <motion.div className="absolute -top-3 -right-3 text-4xl"
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}>

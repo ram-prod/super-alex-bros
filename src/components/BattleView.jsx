@@ -25,6 +25,9 @@ const PARTICLES = Array.from({ length: 12 }, (_, i) => ({
 function CharacterSprite({ player, side, battleState, isLoser }) {
   const charId = player?.chosenCharacter;
   const color = FIGHTER_COLORS[charId] || '#888';
+  const characters = useGameStore((s) => s.characters);
+  const charData = characters.find((c) => c.id === charId);
+  const hasBody = !!charData?.body;
   const [imgError, setImgError] = useState(false);
   const isLeft = side === 'left';
 
@@ -60,9 +63,17 @@ function CharacterSprite({ player, side, battleState, isLoser }) {
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           >
             <div className="relative">
-              {!imgError ? (
+              {!imgError && hasBody ? (
                 <img
-                  src={`/assets/characters/${charId}.jpg`}
+                  src={`/assets/characters/${charData.body}`}
+                  alt={player?.name}
+                  onError={() => setImgError(true)}
+                  className="w-40 h-40 sm:w-56 sm:h-56 md:w-72 md:h-72 object-contain drop-shadow-[0_0_15px_rgba(0,0,0,0.8)]"
+                  style={{ transform: isLeft ? 'none' : 'scaleX(-1)', filter: `drop-shadow(0 0 10px ${color}40)` }}
+                />
+              ) : !imgError ? (
+                <img
+                  src={charData?.portrait ? `/assets/characters/${charData.portrait}` : `/assets/characters/${charId}.jpg`}
                   alt={player?.name}
                   onError={() => setImgError(true)}
                   className="w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 rounded-2xl object-cover border-3 shadow-lg"

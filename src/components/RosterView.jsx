@@ -67,7 +67,7 @@ function FighterCard({ character, currentPlayerId, players }) {
       {/* Fighter image with emoji fallback */}
       <div className="relative z-10 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden flex items-center justify-center">
         <img
-          src={`/assets/characters/${character.id}.jpg`}
+          src={character.portrait ? `/assets/characters/${character.portrait}` : `/assets/characters/${character.id}.jpg`}
           alt={character.name}
           className="w-full h-full object-cover"
           onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
