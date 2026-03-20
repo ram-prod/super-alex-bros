@@ -104,7 +104,7 @@ export default function VipRouletteView() {
                 spinning={phase === 'spinning'}
                 winner={winner}
                 accentColor="yellow"
-                itemHeight={100}
+                size={180}
               />
             </motion.div>
           )}

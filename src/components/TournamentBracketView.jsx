@@ -160,7 +160,7 @@ function WildcardRoulette({ candidates, players, onComplete }) {
                 spinning={phase === 'spinning'}
                 winner={slotWinner}
                 accentColor="purple"
-                itemHeight={90}
+                size={160}
               />
             </motion.div>
           )}
