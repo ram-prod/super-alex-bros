@@ -10,7 +10,7 @@ const FIGHTER_EMOJI = {
  * Casino slot reel. No visible container — uses CSS mask-image for seamless fade.
  * Scrolls top-to-bottom. Decelerates smoothly to land on winner.
  */
-export default function SlotReel({ candidates, spinning, winner, accentColor = 'yellow', size = 180, onLanded }) {
+export default function SlotReel({ candidates, spinning, winner, accentColor = 'yellow', size = 180, onLanded, startIndex = 0 }) {
   const [offset, setOffset] = useState(0);
   const offsetRef = useRef(0);
   const rafRef = useRef(null);
@@ -92,7 +92,9 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
   }, []);
 
   // Start offset shifted by 1 step so the peek card appears ABOVE center
-  const displayOffset = spinning || winner ? offset : step;
+  // Each reel starts at a different candidate position so multiple reels don't look identical
+  const initialOffset = ((startIndex % candidates.length) * step) + step;
+  const displayOffset = spinning || winner ? offset : initialOffset;
   const viewportHeight = step * 3;
 
   return (

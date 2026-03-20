@@ -183,6 +183,7 @@ function WildcardRoulette({ candidates, players, onComplete }) {
                   accentColor="purple"
                   size={reelSize}
                   onLanded={() => handleReelLanded(i)}
+                  startIndex={i * 2}
                 />
               ))}
             </motion.div>
@@ -261,7 +262,7 @@ function WildcardRoulette({ candidates, players, onComplete }) {
 export default function TournamentBracketView() {
   const {
     players, knockoutRounds, pendingMatches, completedMatches, bracketStage,
-    vipPlayerId, wildcardCandidates, selectedWildcards,
+    vipPlayerId, wildcardCandidates, selectedWildcards, bracketConfig,
     isTournamentOver, generateTournament, advanceTournament, executeWildcards,
   } = useGameStore();
 
@@ -450,7 +451,7 @@ export default function TournamentBracketView() {
           <div className="bg-gradient-to-t from-black via-black/95 to-transparent pt-6 pb-4 px-4">
             <div className="max-w-md mx-auto text-center">
               <p className="text-sm font-bold uppercase tracking-widest text-purple-300 drop-shadow-md mb-4">
-                🃏 {wildcardCandidates.length} fighters eliminated — wildcards must be drawn!
+                🃏 {wildcardCandidates.length} fighters eliminated — {(bracketConfig?.wildcards || 1) === 1 ? 'a wildcard must' : 'wildcards must'} be drawn!
               </p>
               <motion.button onClick={() => setShowRoulette(true)} className="group w-full"
                 animate={{ scale: [1, 1.02, 1] }} transition={{ duration: 2, repeat: Infinity }}
@@ -458,7 +459,7 @@ export default function TournamentBracketView() {
                 <div className="w-full py-4 border-2 border-purple-400/50 bg-purple-600/20 rounded-sm group-hover:bg-purple-500/30 group-hover:border-purple-400 group-hover:shadow-[0_0_40px_rgba(168,85,247,0.4)] transition-all duration-200"
                   style={{ transform: 'skewX(-10deg)' }}>
                   <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-lg text-purple-200">
-                    🎰 DRAW WILDCARDS
+                    🎰 DRAW {(bracketConfig?.wildcards || 1) === 1 ? 'WILDCARD' : 'WILDCARDS'}
                   </div>
                 </div>
               </motion.button>
