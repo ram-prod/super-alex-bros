@@ -6,21 +6,90 @@ const FIGHTER_EMOJI = {
   frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
 };
 
-function FighterImage({ player, side, characters }) {
+function FighterPanel({ player, side, characters }) {
   const charId = player?.chosenCharacter;
   const charData = characters.find((c) => c.id === charId);
   const isLeft = side === 'left';
-  if (charData?.body) {
-    return (
-      <img
-        src={`/assets/characters/${charData.body}`}
-        alt={player?.name}
-        className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 object-contain drop-shadow-[0_0_15px_rgba(0,0,0,0.8)]"
-        style={{ transform: isLeft ? 'none' : 'scaleX(-1)' }}
-      />
-    );
-  }
-  return <span className="text-7xl sm:text-8xl">{FIGHTER_EMOJI[charId] || '❓'}</span>;
+  const hasBody = !!charData?.body;
+
+  return (
+    <div className={`relative flex flex-col items-center justify-end h-full ${isLeft ? 'pr-8 sm:pr-12' : 'pl-8 sm:pl-12'}`}>
+      {/* Character image or emoji fallback */}
+      <motion.div
+        className="relative z-10 flex-1 flex items-end justify-center min-h-0"
+        initial={{ x: isLeft ? '-60vw' : '60vw', opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ type: 'tween', ease: 'easeOut', duration: 0.5, delay: 0.1 }}
+      >
+        {hasBody ? (
+          <motion.img
+            src={`/assets/characters/${charData.body}`}
+            alt={player?.name}
+            className="max-h-[65vh] w-auto object-contain drop-shadow-[0_0_30px_rgba(0,0,0,0.9)]"
+            style={{
+              transform: isLeft ? 'none' : 'scaleX(-1)',
+              filter: `drop-shadow(0 0 20px ${isLeft ? 'rgba(239,68,68,0.4)' : 'rgba(59,130,246,0.4)'})`,
+            }}
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        ) : (
+          /* Silhouette placeholder with emoji */
+          <motion.div
+            className="relative flex items-center justify-center"
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <div
+              className={`w-48 h-64 sm:w-56 sm:h-80 md:w-64 md:h-96 rounded-2xl flex items-center justify-center ${
+                isLeft
+                  ? 'bg-gradient-to-t from-red-900/60 to-red-800/20 border border-red-500/30'
+                  : 'bg-gradient-to-t from-blue-900/60 to-blue-800/20 border border-blue-500/30'
+              }`}
+              style={{
+                boxShadow: isLeft
+                  ? '0 0 40px rgba(239,68,68,0.2), inset 0 0 40px rgba(239,68,68,0.1)'
+                  : '0 0 40px rgba(59,130,246,0.2), inset 0 0 40px rgba(59,130,246,0.1)',
+              }}
+            >
+              <span className="text-8xl sm:text-9xl drop-shadow-lg">{FIGHTER_EMOJI[charId] || '❓'}</span>
+            </div>
+          </motion.div>
+        )}
+      </motion.div>
+
+      {/* Name plate */}
+      <motion.div
+        className="relative z-20 mt-2 mb-4 text-center"
+        initial={{ y: 40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'tween', ease: 'easeOut', duration: 0.4, delay: 0.6 }}
+      >
+        <div
+          className={`px-6 sm:px-8 py-2 sm:py-3 backdrop-blur-sm border-b-2 ${
+            isLeft
+              ? 'bg-red-950/60 border-red-500/80'
+              : 'bg-blue-950/60 border-blue-500/80'
+          }`}
+          style={{ transform: 'skewX(-8deg)' }}
+        >
+          <div
+            className="text-2xl sm:text-3xl md:text-4xl font-black text-white uppercase tracking-wider drop-shadow-lg"
+            style={{ transform: 'skewX(8deg)' }}
+          >
+            {player?.name}
+          </div>
+        </div>
+        <div
+          className={`text-xs sm:text-sm font-bold uppercase tracking-[0.3em] mt-1 ${
+            isLeft ? 'text-red-400/70' : 'text-blue-400/70'
+          }`}
+        >
+          {charData?.name || '???'}
+        </div>
+      </motion.div>
+    </div>
+  );
 }
 
 export default function VsScreenView() {
@@ -28,45 +97,79 @@ export default function VsScreenView() {
   const { player1, player2 } = currentMatch;
   const isFinal = currentMatch.isFinal;
 
-  const getCharName = (p) => characters.find((c) => c.id === p?.chosenCharacter)?.name || '???';
-
   return (
     <div className="relative min-h-screen overflow-hidden flex flex-col">
-      {/* Split background */}
-      <div className="absolute inset-0 flex">
-        <div className="w-1/2 bg-gradient-to-br from-red-950 via-red-900/80 to-black" />
-        <div className="w-1/2 bg-gradient-to-bl from-blue-950 via-blue-900/80 to-black" />
-      </div>
+      {/* Red half (left) */}
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-red-950 via-red-900/90 to-black"
+        style={{ clipPath: 'polygon(0 0, 58% 0, 42% 100%, 0 100%)' }}
+      />
+      {/* Blue half (right) */}
+      <div
+        className="absolute inset-0 bg-gradient-to-bl from-blue-950 via-blue-900/90 to-black"
+        style={{ clipPath: 'polygon(58% 0, 100% 0, 100% 100%, 42% 100%)' }}
+      />
 
-      {/* Diagonal slash */}
-      <div className="absolute inset-0 pointer-events-none">
+      {/* Diagonal energy slash */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none z-20"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.3 }}
+      >
+        {/* Main slash glow */}
         <div
-          className="absolute top-0 left-1/2 w-2 h-full -translate-x-1/2 bg-gradient-to-b from-yellow-400 via-white to-yellow-400 opacity-60 blur-sm"
-          style={{ transform: 'translateX(-50%) skewX(-5deg)' }}
+          className="absolute top-0 h-full"
+          style={{
+            left: '42%',
+            width: '16%',
+            background: 'linear-gradient(to right, transparent, rgba(250,204,21,0.08) 30%, rgba(255,255,255,0.15) 48%, rgba(255,255,255,0.15) 52%, rgba(250,204,21,0.08) 70%, transparent)',
+            clipPath: 'polygon(38% 0, 62% 0, 38% 100%, 12% 100%)',
+          }}
         />
-      </div>
+        {/* Sharp center line */}
+        <div
+          className="absolute top-0 h-full"
+          style={{
+            left: '49%',
+            width: '2%',
+            background: 'linear-gradient(180deg, rgba(250,204,21,0.6), rgba(255,255,255,0.9) 30%, rgba(255,255,255,0.9) 70%, rgba(250,204,21,0.6))',
+            clipPath: 'polygon(100% 0, 100% 0, 0% 100%, 0% 100%)',
+            filter: 'blur(1px)',
+            transform: 'translateX(-50%) skewX(-10deg)',
+          }}
+        />
+      </motion.div>
 
       {/* Scanlines */}
       <div
-        className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        className="absolute inset-0 opacity-[0.03] pointer-events-none z-30"
         style={{
           backgroundImage:
             'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.05) 2px, rgba(255,255,255,0.05) 4px)',
         }}
       />
 
-      {/* Content */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6">
+      {/* Screen flash on VS impact */}
+      <motion.div
+        className="absolute inset-0 bg-white pointer-events-none z-40"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0, 0.7, 0] }}
+        transition={{ duration: 1.2, times: [0, 0.55, 0.6, 0.75], ease: 'easeOut' }}
+      />
+
+      {/* Content layer */}
+      <div className="relative z-30 flex-1 flex flex-col min-h-screen">
         {/* GRAND FINAL banner */}
         {isFinal && (
           <motion.div
-            className="mb-6"
-            initial={{ y: -60, opacity: 0, scale: 1.5 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
+            className="relative z-40 pt-6 sm:pt-8 text-center"
+            initial={{ y: -80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: 'tween', ease: 'easeOut', duration: 0.4, delay: 0.8 }}
           >
             <motion.h2
-              className="text-4xl sm:text-5xl md:text-6xl font-black italic text-center uppercase tracking-wide"
+              className="text-3xl sm:text-5xl md:text-6xl font-black italic uppercase tracking-wide"
               style={{
                 background: 'linear-gradient(180deg, #ffd700, #f59e0b, #d97706)',
                 WebkitBackgroundClip: 'text',
@@ -86,109 +189,85 @@ export default function VsScreenView() {
               ⚔️ GRAND FINAL ⚔️
             </motion.h2>
             <motion.p
-              className="text-center text-sm text-yellow-400/70 uppercase tracking-[0.4em] font-bold mt-1"
+              className="text-xs sm:text-sm text-yellow-400/70 uppercase tracking-[0.4em] font-bold mt-1"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 1.2 }}
             >
               The Bachelor Villa
             </motion.p>
           </motion.div>
         )}
 
-        {/* Fighters */}
-        <div className="w-full max-w-4xl flex items-center justify-between mb-8">
-          {/* Player 1 */}
-          <motion.div
-            className="text-center flex-1"
-            initial={{ x: '-100vw', opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 80, damping: 14, duration: 1.2 }}
-          >
-            <motion.div
-              className="mb-4"
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <FighterImage player={player1} side="left" characters={characters} />
-            </motion.div>
-            <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full font-mono mb-1 inline-block">P{player1?.id}</span>
-            <div className="text-3xl sm:text-4xl font-black text-white mb-1 drop-shadow-lg">
-              {player1?.name}
-            </div>
-          </motion.div>
+        {/* Fighters + VS center area */}
+        <div className="flex-1 flex items-stretch relative">
+          {/* Left fighter */}
+          <div className="w-1/2 flex items-center justify-center">
+            <FighterPanel player={player1} side="left" characters={characters} />
+          </div>
 
-          {/* VS */}
+          {/* VS badge — centered on the slash */}
           <motion.div
-            className="mx-4 flex-shrink-0"
-            initial={{ scale: 5, opacity: 0, rotate: -15 }}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40"
+            initial={{ scale: 6, opacity: 0, rotate: -20 }}
             animate={{ scale: 1, opacity: 1, rotate: 0 }}
-            transition={{ delay: 0.8, type: 'spring', stiffness: 150, damping: 12 }}
+            transition={{ delay: 0.55, type: 'tween', ease: 'easeOut', duration: 0.25 }}
           >
             <motion.div
-              className="text-7xl sm:text-8xl md:text-9xl font-black"
+              className="relative"
               animate={{
-                textShadow: [
-                  '0 0 20px rgba(250,204,21,0.4), 0 0 60px rgba(250,204,21,0.2)',
-                  '0 0 40px rgba(250,204,21,0.8), 0 0 100px rgba(250,204,21,0.4)',
-                  '0 0 20px rgba(250,204,21,0.4), 0 0 60px rgba(250,204,21,0.2)',
+                filter: [
+                  'drop-shadow(0 0 20px rgba(250,204,21,0.4))',
+                  'drop-shadow(0 0 50px rgba(250,204,21,0.8))',
+                  'drop-shadow(0 0 20px rgba(250,204,21,0.4))',
                 ],
               }}
               transition={{ duration: 2, repeat: Infinity }}
-              style={{
-                WebkitTextStroke: '2px rgba(255,255,255,0.3)',
-                color: 'transparent',
-                background: 'linear-gradient(180deg, #facc15, #f97316, #ef4444)',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-              }}
             >
-              VS
+              <span
+                className="text-7xl sm:text-8xl md:text-9xl font-black italic select-none"
+                style={{
+                  WebkitTextStroke: '3px rgba(255,255,255,0.4)',
+                  background: 'linear-gradient(180deg, #facc15, #f97316, #ef4444)',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                  filter: 'drop-shadow(0 6px 0 rgba(0,0,0,0.6))',
+                }}
+              >
+                VS
+              </span>
             </motion.div>
           </motion.div>
 
-          {/* Player 2 */}
-          <motion.div
-            className="text-center flex-1"
-            initial={{ x: '100vw', opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 80, damping: 14, duration: 1.2 }}
-          >
-            <motion.div
-              className="mb-4"
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-            >
-              <FighterImage player={player2} side="right" characters={characters} />
-            </motion.div>
-            <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full font-mono mb-1 inline-block">P{player2?.id}</span>
-            <div className="text-3xl sm:text-4xl font-black text-white mb-1 drop-shadow-lg">
-              {player2?.name}
-            </div>
-          </motion.div>
+          {/* Right fighter */}
+          <div className="w-1/2 flex items-center justify-center">
+            <FighterPanel player={player2} side="right" characters={characters} />
+          </div>
         </div>
 
-        {/* COMMENCE BATTLE */}
-        <motion.button
-          onClick={startBattle}
-          data-sound="special"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5, type: 'spring', stiffness: 150 }}
-          className="mt-4"
-        >
-          <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}>
-            <div className={`flex items-center justify-center px-10 sm:px-14 py-4 sm:py-5 border-2 backdrop-blur-md transition-all duration-300 ${
-              isFinal
-                ? 'bg-gradient-to-r from-yellow-500/20 via-orange-500/20 to-red-500/20 border-yellow-400/80 text-yellow-300 hover:shadow-[0_0_50px_rgba(250,204,21,0.6)]'
-                : 'bg-red-600/20 border-red-500/80 text-red-400 hover:bg-red-600/30 hover:border-red-400 hover:shadow-[0_0_40px_rgba(239,68,68,0.5)]'
-            }`} style={{ transform: 'skewX(-10deg)' }}>
-              <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-3xl sm:text-4xl">
-                ⚔️ COMMENCE BATTLE ⚔️
+        {/* COMMENCE BATTLE button */}
+        <div className="relative z-40 flex justify-center pb-8 sm:pb-10">
+          <motion.button
+            onClick={startBattle}
+            data-sound="special"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2, type: 'tween', ease: 'easeOut', duration: 0.4 }}
+          >
+            <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}>
+              <div className={`flex items-center justify-center px-10 sm:px-14 py-4 sm:py-5 border-2 backdrop-blur-md transition-all duration-300 ${
+                isFinal
+                  ? 'bg-gradient-to-r from-yellow-500/20 via-orange-500/20 to-red-500/20 border-yellow-400/80 text-yellow-300 hover:shadow-[0_0_50px_rgba(250,204,21,0.6)]'
+                  : 'bg-red-600/20 border-red-500/80 text-red-400 hover:bg-red-600/30 hover:border-red-400 hover:shadow-[0_0_40px_rgba(239,68,68,0.5)]'
+              }`} style={{ transform: 'skewX(-10deg)' }}>
+                <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-3xl sm:text-4xl">
+                  ⚔️ COMMENCE BATTLE ⚔️
+                </div>
               </div>
-            </div>
-          </motion.div>
-        </motion.button>
+            </motion.div>
+          </motion.button>
+        </div>
       </div>
     </div>
   );
