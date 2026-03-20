@@ -182,29 +182,31 @@ function Projectile({ startPos, endPos, onComplete }) {
   const midY = (startPos.y + endPos.y) / 2;
 
   return (
+    /* Layer 1: horizontal position — moves left to right (or right to left) */
     <motion.div
-      className="fixed z-30 text-5xl sm:text-6xl pointer-events-none"
+      className="fixed z-30 pointer-events-none"
       style={{
         left: startPos.x,
         top: midY,
         transform: 'translate(-50%, -50%)',
       }}
-      animate={{
-        left: endPos.x,
-        rotate: [0, 360, 720],
-      }}
-      transition={{
-        left: { duration, ease: 'linear' },
-        rotate: { duration, ease: 'linear' },
-      }}
+      animate={{ left: endPos.x }}
+      transition={{ left: { duration, ease: 'linear' } }}
       onAnimationComplete={onComplete}
     >
-      {/* Parabolic arc: up then down — classic beer toss arc */}
+      {/* Layer 2: vertical arc — parabolic toss up then gravity down */}
       <motion.div
         animate={{ y: [0, -arcHeight, 0] }}
         transition={{ duration, ease: [0.2, 0, 0.8, 1] }}
       >
-        🍺
+        {/* Layer 3: spin — only the emoji rotates, doesn't affect position */}
+        <motion.span
+          className="text-5xl sm:text-6xl inline-block"
+          animate={{ rotate: [0, 360, 720] }}
+          transition={{ duration, ease: 'linear' }}
+        >
+          🍺
+        </motion.span>
       </motion.div>
     </motion.div>
   );
