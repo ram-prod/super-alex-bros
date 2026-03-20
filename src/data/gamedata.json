@@ -21,8 +21,8 @@
     {
       "id": "martin",
       "name": "Martin",
-      "portrait": null,
-      "body": null
+      "portrait": "martin-portrait.jpg",
+      "body": "martin-body.png"
     },
     {
       "id": "robin",
