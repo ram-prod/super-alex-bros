@@ -388,7 +388,7 @@ export default function TournamentBracketView() {
 
             return (
               <div key={roundIdx} className="contents">
-                <div className="flex flex-col flex-1 min-w-0">
+                <div className="flex flex-col flex-1 min-w-0 max-w-sm">
                   {/* Round label */}
                   <div className={`text-center mb-1 ${isActiveRound ? 'text-yellow-400' : 'text-gray-500'}`}>
                     <div className={`${s.roundLabel} font-black uppercase tracking-widest drop-shadow-sm`}>
