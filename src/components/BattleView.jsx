@@ -255,18 +255,22 @@ function KOStarTrail({ targetPos }) {
   );
 }
 
-// Beer-splash particles — short upward burst then drip down with gravity
-const SPLASH_PARTICLES = Array.from({ length: 14 }, (_, i) => ({
-  id: i,
-  // Mild horizontal spread, heavier vertical (drip effect)
-  xSpread: (Math.random() - 0.5) * 80,
-  // Initial upward burst (short), then gravity pulls down
-  burstY: -30 - Math.random() * 50,
-  dripY: 120 + Math.random() * 150,
-  delay: Math.random() * 0.08,
-  emoji: ['💦', '🍺', '💔', '💦', '💔', '💥', '💦', '🍺', '💦', '💔', '💦', '💥', '💦', '💔'][i],
-  size: 0.5 + Math.random() * 0.6,
-}));
+// Beer-splash particles — pyramid splash: burst out then arc downward while spreading
+const SPLASH_PARTICLES = Array.from({ length: 12 }, (_, i) => {
+  const angle = (Math.random() - 0.5) * Math.PI * 0.8; // spread angle (-72° to +72°)
+  const force = 0.6 + Math.random() * 0.5; // how far this particle travels
+  return {
+    id: i,
+    // Horizontal: arcs outward in a pyramid shape
+    xArc: Math.sin(angle) * 120 * force,
+    // Vertical: small upward burst, then gentle arc down
+    yBurst: -20 - Math.random() * 35,
+    yEnd: 60 + Math.random() * 80,
+    delay: Math.random() * 0.1,
+    emoji: ['💦', '💔', '💦', '💔', '💥', '💦', '🍺', '💦', '💔', '💦', '💔', '💦'][i],
+    size: 0.5 + Math.random() * 0.5,
+  };
+});
 
 function HitExplosion({ targetPos }) {
   if (!targetPos) return null;
@@ -283,18 +287,19 @@ function HitExplosion({ targetPos }) {
             fontSize: `${p.size * 1.8}rem`,
             transform: 'translate(-50%, -50%)',
           }}
-          initial={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 1, scale: 1.1 }}
           animate={{
-            x: [0, p.xSpread * 0.4, p.xSpread],
-            y: [0, p.burstY, p.dripY],
-            opacity: [1, 1, 0],
-            scale: [1.2, 1, 0.4],
+            x: [0, p.xArc * 0.5, p.xArc],
+            y: [0, p.yBurst, p.yEnd],
+            opacity: [1, 0.8, 0],
+            scale: [1.1, 0.9, 0.3],
           }}
           transition={{
-            duration: 1.3,
+            duration: 1.1,
             delay: p.delay,
             ease: 'easeOut',
-            y: { ease: [0.15, 0, 0.85, 1] }, // burst up then gravity drip
+            y: { ease: [0.1, 0, 0.6, 1] },
+            opacity: { ease: 'easeIn' },
           }}
         >
           {p.emoji}
