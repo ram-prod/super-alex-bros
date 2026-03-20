@@ -25,7 +25,9 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
   const glowColor = accentColor === 'purple' ? 'rgba(168,85,247,0.5)' : 'rgba(250,204,21,0.5)';
   const borderClass = accentColor === 'purple' ? 'border-purple-400/80' : 'border-yellow-400/80';
 
-  const extended = [...candidates, ...candidates, ...candidates];
+  // Reversed so next-up card appears ABOVE center (matching top-to-bottom scroll direction)
+  const reversed = [...candidates].reverse();
+  const extended = [...reversed, ...reversed, ...reversed];
 
   useEffect(() => { offsetRef.current = offset; }, [offset]);
 
@@ -50,7 +52,7 @@ export default function SlotReel({ candidates, spinning, winner, accentColor = '
   useEffect(() => {
     if (!winner || !spinning || landedRef.current) return;
 
-    const winnerIdx = candidates.findIndex((p) => p.id === winner.id);
+    const winnerIdx = reversed.findIndex((p) => p.id === winner.id);
     const targetOffset = winnerIdx * step;
 
     const currentOff = offsetRef.current;
