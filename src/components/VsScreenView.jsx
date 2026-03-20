@@ -11,7 +11,7 @@ const FIGHTER_EMOJI = {
  * That's a 16% horizontal shift over 100% vertical = atan(16/100) ≈ 9.09°.
  * We use the same skewX for the energy slash so they align perfectly.
  */
-const SLASH_SKEW = 'skewX(9.1deg)';
+const SLASH_SKEW = 'skewX(-9.1deg)';
 
 function FighterPanel({ player, side, characters }) {
   const charId = player?.chosenCharacter;
@@ -136,25 +136,25 @@ export default function VsScreenView() {
       >
         {/* Wide outer glow */}
         <div
-          className="absolute h-[120%] w-[6px] sm:w-[8px]"
+          className="absolute h-[120%] w-[40px] sm:w-[60px]"
           style={{
             transform: SLASH_SKEW,
-            background: 'linear-gradient(180deg, rgba(250,204,21,0.1), rgba(255,255,255,0.3) 30%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.3) 70%, rgba(250,204,21,0.1))',
-            filter: 'blur(12px)',
+            background: 'linear-gradient(180deg, rgba(250,204,21,0.05), rgba(255,255,255,0.15) 30%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.15) 70%, rgba(250,204,21,0.05))',
+            filter: 'blur(16px)',
           }}
         />
         {/* Medium glow */}
         <div
-          className="absolute h-[120%] w-[4px]"
+          className="absolute h-[120%] w-[12px] sm:w-[16px]"
           style={{
             transform: SLASH_SKEW,
-            background: 'linear-gradient(180deg, rgba(250,204,21,0.3), rgba(255,255,255,0.7) 30%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0.7) 70%, rgba(250,204,21,0.3))',
-            filter: 'blur(4px)',
+            background: 'linear-gradient(180deg, rgba(250,204,21,0.2), rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.5) 70%, rgba(250,204,21,0.2))',
+            filter: 'blur(6px)',
           }}
         />
         {/* Sharp center line */}
         <div
-          className="absolute h-[120%] w-[2px]"
+          className="absolute h-[120%] w-[3px]"
           style={{
             transform: SLASH_SKEW,
             background: 'linear-gradient(180deg, rgba(250,204,21,0.6), rgba(255,255,255,1) 20%, rgba(255,255,255,1) 80%, rgba(250,204,21,0.6))',
