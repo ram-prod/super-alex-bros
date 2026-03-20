@@ -132,9 +132,11 @@ export default function VictoryView() {
               <div className="mb-4">
                 {(() => {
                   const cd = characters.find((c) => c.id === realWinner?.chosenCharacter);
-                  return cd?.body
-                    ? <img src={`/assets/characters/${cd.body}`} alt={realWinner?.name} className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-[0_0_15px_rgba(0,0,0,0.8)]" />
-                    : <span className="text-6xl">{FIGHTER_EMOJI[realWinner?.chosenCharacter] || '⭐'}</span>;
+                  return cd?.portrait
+                    ? <img src={`/assets/characters/${cd.portrait}`} alt={realWinner?.name}
+                        className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl object-cover border-3 shadow-lg"
+                        style={{ borderColor: winnerColor, boxShadow: `0 0 30px ${winnerColor}50` }} />
+                    : <span className="text-6xl">{FIGHTER_EMOJI[realWinner?.chosenCharacter] || '🏆'}</span>;
                 })()}
               </div>
               <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full font-mono mb-2 inline-block">P{realWinner?.id}</span>
@@ -170,22 +172,22 @@ export default function VictoryView() {
                 transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}>
                 {(() => {
                   const cd = characters.find((c) => c.id === realWinner?.chosenCharacter);
-                  if (cd?.body && !imgError) {
-                    return <img src={`/assets/characters/${cd.body}`} alt={winnerCharName}
+                  if (cd?.portrait && !imgError) {
+                    return <img src={`/assets/characters/${cd.portrait}`} alt={winnerCharName}
                       onError={() => setImgError(true)}
-                      className="w-44 h-44 sm:w-60 sm:h-60 object-contain drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]"
-                      style={{ filter: `drop-shadow(0 0 15px ${winnerColor}60)` }} />;
+                      className="w-48 h-48 sm:w-64 sm:h-64 rounded-2xl object-cover border-4 shadow-lg"
+                      style={{ borderColor: winnerColor, boxShadow: `0 0 50px ${winnerColor}60` }} />;
                   }
                   if (!imgError) {
-                    const src = cd?.portrait ? `/assets/characters/${cd.portrait}` : `/assets/characters/${realWinner?.chosenCharacter}.jpg`;
+                    const src = `/assets/characters/${realWinner?.chosenCharacter}.jpg`;
                     return <img src={src} alt={winnerCharName}
                       onError={() => setImgError(true)}
-                      className="w-44 h-44 sm:w-60 sm:h-60 rounded-2xl object-cover border-4 shadow-lg"
-                      style={{ borderColor: winnerColor, boxShadow: `0 0 40px ${winnerColor}60` }} />;
+                      className="w-48 h-48 sm:w-64 sm:h-64 rounded-2xl object-cover border-4 shadow-lg"
+                      style={{ borderColor: winnerColor, boxShadow: `0 0 50px ${winnerColor}60` }} />;
                   }
-                  return <div className="w-44 h-44 sm:w-60 sm:h-60 rounded-2xl border-4 flex items-center justify-center text-7xl"
-                    style={{ borderColor: winnerColor, backgroundColor: `${winnerColor}15`, boxShadow: `0 0 40px ${winnerColor}60` }}>
-                    {FIGHTER_EMOJI[realWinner?.chosenCharacter] || '⭐'}
+                  return <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-2xl border-4 flex items-center justify-center text-7xl"
+                    style={{ borderColor: winnerColor, backgroundColor: `${winnerColor}15`, boxShadow: `0 0 50px ${winnerColor}60` }}>
+                    {FIGHTER_EMOJI[realWinner?.chosenCharacter] || '🏆'}
                   </div>;
                 })()}
                 <motion.div className="absolute -top-3 -right-3 text-4xl"
@@ -307,7 +309,7 @@ export default function VictoryView() {
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}>
                 {!sikeImgError ? (
-                  <img src="/assets/characters/alexander.jpg" alt="Alexander"
+                  <img src={`/assets/characters/${characters.find(c => c.id === 'alexander')?.portrait || 'alexander-portrait.jpg'}`} alt="Alexander"
                     onError={() => setSikeImgError(true)}
                     className="w-52 h-52 sm:w-72 sm:h-72 rounded-2xl object-cover border-4 shadow-lg"
                     style={{ borderColor: alexanderColor, boxShadow: `0 0 60px ${alexanderColor}80` }} />
