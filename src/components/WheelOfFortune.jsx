@@ -78,7 +78,7 @@ export default function WheelOfFortune({ onClose }) {
 
     const startRotation = rotationRef.current;
     const distance = totalRotation - startRotation;
-    const totalFrames = 200; // ~3.3s at 60fps
+    const totalFrames = 240; // ~4s at 60fps — slightly longer for tension
     let frame = 0;
 
     const animate = () => {
@@ -93,11 +93,11 @@ export default function WheelOfFortune({ onClose }) {
       if (frame >= totalFrames) {
         rotationRef.current = totalRotation;
         setRotation(totalRotation);
-        // Brief pause then reveal
+        // Pause on winner — let it sink in before reveal
         setTimeout(() => {
           useGameStore.getState().playSFX('smash');
           setPhase('reveal');
-        }, 600);
+        }, 1100);
         return;
       }
       rafRef.current = requestAnimationFrame(animate);
@@ -182,7 +182,7 @@ export default function WheelOfFortune({ onClose }) {
                     {/* Circular clip paths for portraits */}
                     {players.map((_, i) => {
                       const midAngle = i * segmentAngle + segmentAngle / 2;
-                      const pos = polarToCartesian(cx, cy, radius * 0.6, midAngle);
+                      const pos = polarToCartesian(cx, cy, radius * 0.72, midAngle);
                       return (
                         <clipPath key={`clip-${i}`} id={`portrait-clip-${i}`}>
                           <circle cx={pos.x} cy={pos.y} r={28} />
@@ -198,8 +198,8 @@ export default function WheelOfFortune({ onClose }) {
                     const color = FIGHTER_COLORS[player.chosenCharacter] || '#666';
                     const charData = characters.find((c) => c.id === player.chosenCharacter);
 
-                    // Position for portrait/emoji — centered in segment
-                    const labelRadius = radius * 0.6;
+                    // Position for portrait/emoji — toward outer edge, under needle
+                    const labelRadius = radius * 0.72;
                     const labelPos = polarToCartesian(cx, cy, labelRadius, midAngle);
 
                     return (
