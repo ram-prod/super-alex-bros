@@ -51,8 +51,8 @@
     {
       "id": "gereon",
       "name": "Gereon",
-      "portrait": null,
-      "body": null
+      "portrait": "gereon-portrait.jpg",
+      "body": "gereon-body.png"
     },
     {
       "id": "noah",
