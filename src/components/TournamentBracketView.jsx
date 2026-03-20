@@ -227,7 +227,7 @@ function WildcardRoulette({ candidates, players, onComplete }) {
                 <div className="px-8 py-3 border-2 border-purple-400/50 bg-gradient-to-r from-purple-600/30 to-pink-600/30 rounded-sm group-hover:border-purple-300 group-hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] transition-all duration-200"
                   style={{ transform: 'skewX(-10deg)' }}>
                   <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-base text-purple-200">
-                    ⚔️ TO THE QUARTER-FINALS
+                    ⚔️ TO THE {bracketConfig?.base === 'QF' ? 'QUARTER-FINALS' : bracketConfig?.base === 'SF' ? 'SEMI-FINALS' : 'FINAL'}
                   </div>
                 </div>
               </motion.button>
