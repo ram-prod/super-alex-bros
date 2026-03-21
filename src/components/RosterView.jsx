@@ -3,34 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
 import BackButton from './BackButton';
 import CharacterThumb from './CharacterThumb';
-
-const FIGHTER_COLORS = {
-  ruggero: '#ff4444',
-  koen: '#44aaff',
-  matthew: '#44ff88',
-  martin: '#ff8844',
-  robin: '#aa44ff',
-  frederik: '#ffdd44',
-  vincent: '#ff44aa',
-  devan: '#44ffdd',
-  gereon: '#8888ff',
-  noah: '#ff6666',
-  alexander: '#ffd700',
-};
-
-const FIGHTER_EMOJI = {
-  ruggero: '🔥',
-  koen: '⚡',
-  matthew: '🌊',
-  martin: '🗡️',
-  robin: '🏹',
-  frederik: '🛡️',
-  vincent: '💎',
-  devan: '🌀',
-  gereon: '⚔️',
-  noah: '🌩️',
-  alexander: '👑',
-};
+import { FIGHTER_EMOJI, FIGHTER_COLORS } from '../data/fighters';
 
 function FighterCard({ character, currentPlayerId, players, animDelay = 0 }) {
   const assignCharacter = useGameStore((s) => s.assignCharacter);

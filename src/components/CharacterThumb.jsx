@@ -1,9 +1,5 @@
 import useGameStore from '../store/useGameStore';
-
-const FIGHTER_EMOJI = {
-  ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
-  frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
-};
+import { FIGHTER_EMOJI } from '../data/fighters';
 
 /**
  * Compact character portrait thumbnail. Replaces emoji with portrait image where available.

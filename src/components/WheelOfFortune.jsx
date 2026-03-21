@@ -1,16 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
-
-const FIGHTER_EMOJI = {
-  ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
-  frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
-};
-
-const FIGHTER_COLORS = {
-  ruggero: '#ff4444', koen: '#44aaff', matthew: '#44ff88', martin: '#ff8844', robin: '#aa44ff',
-  frederik: '#ffdd44', vincent: '#ff44aa', devan: '#44ffdd', gereon: '#8888ff', noah: '#ff6666', alexander: '#ffd700',
-};
+import { FIGHTER_EMOJI, FIGHTER_COLORS } from '../data/fighters';
 
 // Darken a hex color by a factor (0-1)
 function darken(hex, factor = 0.4) {

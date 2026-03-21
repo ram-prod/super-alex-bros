@@ -5,11 +5,7 @@ import BackButton from './BackButton';
 import CharacterThumb from './CharacterThumb';
 import SlotReel from './SlotReel';
 import WheelOfFortune from './WheelOfFortune';
-
-const FIGHTER_EMOJI = {
-  ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
-  frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
-};
+import { FIGHTER_EMOJI } from '../data/fighters';
 
 const ROUND_HEADERS = { Prelims: '🥊 PRELIMS', QF: '⚔️ QUARTER-FINALS', SF: '🔥 SEMI-FINALS', Final: '👑 GRAND FINAL' };
 
@@ -228,7 +224,7 @@ function WildcardRoulette({ candidates, players, onComplete }) {
                 <div className="px-8 py-3 border-2 border-purple-400/50 bg-gradient-to-r from-purple-600/30 to-pink-600/30 rounded-sm group-hover:border-purple-300 group-hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] transition-all duration-200"
                   style={{ transform: 'skewX(-10deg)' }}>
                   <div style={{ transform: 'skewX(10deg)' }} className="text-smash text-base text-purple-200">
-                    ⚔️ TO THE {bracketConfig?.base === 'QF' ? 'QUARTER-FINALS' : bracketConfig?.base === 'SF' ? 'SEMI-FINALS' : 'FINAL'}
+                    ⚔️ TO THE {(() => { const base = useGameStore.getState().bracketConfig?.base; return base === 'QF' ? 'QUARTER-FINALS' : base === 'SF' ? 'SEMI-FINALS' : 'FINAL'; })()}
                   </div>
                 </div>
               </motion.button>

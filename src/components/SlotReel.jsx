@@ -1,10 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import useGameStore from '../store/useGameStore';
-
-const FIGHTER_EMOJI = {
-  ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
-  frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
-};
+import { FIGHTER_EMOJI } from '../data/fighters';
 
 /**
  * Casino slot reel. No visible container — uses CSS mask-image for seamless fade.

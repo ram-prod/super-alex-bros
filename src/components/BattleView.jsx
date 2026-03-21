@@ -2,16 +2,7 @@ import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHand
 import { motion, AnimatePresence } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
 import CharacterThumb from './CharacterThumb';
-
-const FIGHTER_EMOJI = {
-  ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
-  frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
-};
-
-const FIGHTER_COLORS = {
-  ruggero: '#ff4444', koen: '#44aaff', matthew: '#44ff88', martin: '#ff8844', robin: '#aa44ff',
-  frederik: '#ffdd44', vincent: '#ff44aa', devan: '#44ffdd', gereon: '#8888ff', noah: '#ff6666', alexander: '#ffd700',
-};
+import { FIGHTER_EMOJI, FIGHTER_COLORS } from '../data/fighters';
 
 // KO star trail particles
 const KO_STARS = Array.from({ length: 6 }, (_, i) => ({

@@ -1,10 +1,6 @@
 import { motion } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
-
-const FIGHTER_EMOJI = {
-  ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
-  frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
-};
+import { FIGHTER_EMOJI } from '../data/fighters';
 
 /*
  * Diagonal split: clip-path from (58%, 0) to (42%, 100%).

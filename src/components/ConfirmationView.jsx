@@ -2,11 +2,6 @@ import { motion } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
 import CharacterThumb from './CharacterThumb';
 
-const FIGHTER_EMOJI = {
-  ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
-  frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
-};
-
 export default function ConfirmationView() {
   const players = useGameStore((s) => s.players);
   const evaluateVipPhase = useGameStore((s) => s.evaluateVipPhase);

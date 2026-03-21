@@ -2,11 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
 import SlotReel from './SlotReel';
-
-const FIGHTER_EMOJI = {
-  ruggero: '🔥', koen: '⚡', matthew: '🌊', martin: '🗡️', robin: '🏹',
-  frederik: '🛡️', vincent: '💎', devan: '🌀', gereon: '⚔️', noah: '🌩️', alexander: '👑',
-};
+import { FIGHTER_EMOJI } from '../data/fighters';
 
 /**
  * Reveal card — matches RosterView FighterCard style.
